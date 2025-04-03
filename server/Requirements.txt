@@ -1,0 +1,8 @@
+express 
+mongoose 
+dotenv 
+cors 
+bcrypt 
+jsonwebtoken
+# development dependency - 
+nodemon
