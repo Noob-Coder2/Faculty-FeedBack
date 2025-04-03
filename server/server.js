@@ -5,6 +5,10 @@ const cors = require('cors');
 require('dotenv').config(); // Load environment variables from .env file
 const registerRoutes = require('./routes/register'); // Import registration routes
 const loginRoutes = require('./routes/login'); // Import login routes
+const auth = require('./middleware/auth'); // Import auth middleware
+const checkRole = require('./middleware/role'); // Import role middleware
+const adminRoutes = require('./routes/admin');
+
 
 require('./models/Class');
 require('./models/Subject');
@@ -24,6 +28,8 @@ const PORT = process.env.PORT || 5001; // Use port from env file or default to 5
 // Middleware
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Parse JSON request bodies
+app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
+
 
 // --- Database Connection ---
 const MONGO_URI = process.env.MONGODB_URI;
@@ -46,9 +52,13 @@ app.get('/', (req, res) => {
 });
 
 // --- API Routes --- 
-app.get('/', (req, res) => res.send('Faculty Feedback System Backend is Running!'));
 app.use('/api/auth/register', registerRoutes); // Mount register routes
 app.use('/api/auth/login', loginRoutes); // Mount login routes
+
+// Example protected route (we’ll add more later)
+app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
+    res.json({ message: 'Welcome, admin!', user: req.user });
+});
 
 // --- Add a basic error handler ---
 app.use((err, req, res, next) => {
