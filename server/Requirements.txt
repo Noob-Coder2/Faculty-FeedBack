@@ -4,5 +4,6 @@ dotenv
 cors 
 bcrypt 
 jsonwebtoken
+express-validator
 # development dependency - 
 nodemon

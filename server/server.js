@@ -3,13 +3,23 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config(); // Load environment variables from .env file
+
+// Import routes
 const registerRoutes = require('./routes/register'); // Import registration routes
 const loginRoutes = require('./routes/login'); // Import login routes
-const auth = require('./middleware/auth'); // Import auth middleware
-const checkRole = require('./middleware/role'); // Import role middleware
 const adminRoutes = require('./routes/admin');
+const classRoutes = require('./routes/classes');
+const subjectRoutes = require('./routes/subjects');
+const feedbackPeriodRoutes = require('./routes/feedback-periods');
+const teachingAssignmentRoutes = require('./routes/teaching-assignments');
+const studentRoutes = require('./routes/student');
+const facultyRoutes = require('./routes/faculty');
 
+// Import middleware
+const auth = require('./middleware/auth');
+const checkRole = require('./middleware/role');
 
+// Import models
 require('./models/Class');
 require('./models/Subject');
 require('./models/TeachingAssignment');
@@ -17,9 +27,10 @@ require('./models/FeedbackPeriod');
 require('./models/FeedbackSubmissionStatus');
 require('./models/RatingParameter');
 require('./models/AggregatedRating');
-require('./models/User'); // Import the User model
+require('./models/User');
 require('./models/StudentProfile');
 require('./models/FacultyProfile');
+
 
 // Initialize Express app
 const app = express();
@@ -29,7 +40,12 @@ const PORT = process.env.PORT || 5001; // Use port from env file or default to 5
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Parse JSON request bodies
 app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
-
+app.use('/api/admin/classes', auth, checkRole(['admin']), classRoutes);
+app.use('/api/admin/subjects', auth, checkRole(['admin']), subjectRoutes);
+app.use('/api/admin/feedback-periods', auth, checkRole(['admin']), feedbackPeriodRoutes);
+app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingAssignmentRoutes);
+app.use('/api/student', auth, checkRole(['student']), studentRoutes);
+app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
 
 // --- Database Connection ---
 const MONGO_URI = process.env.MONGODB_URI;

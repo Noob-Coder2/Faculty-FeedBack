@@ -20,10 +20,6 @@ const ratingParameterSchema = new mongoose.Schema({
     type: Boolean,
     default: true, // The parameter is active by default
   },
-  category: {
-    type: String, 
-    required: true, // Category is required to group feedback questions (e.g., "Teaching Quality")
-  },
   createdAt: {
     type: Date,
     default: Date.now, // Automatically set the creation timestamp
