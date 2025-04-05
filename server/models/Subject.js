@@ -20,15 +20,7 @@ const subjectSchema = new mongoose.Schema({
     type: Number,
     required: true, // Semester is required (e.g., 1, 2, 3)
   },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when created
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when created
-  },
-});
+}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
 
 // Model export
 module.exports = mongoose.model('Subject', subjectSchema);

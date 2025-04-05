@@ -31,16 +31,8 @@ const feedbackPeriodSchema = new mongoose.Schema({
     type: String,
     enum: ['upcoming', 'active', 'closed'], // The status of the feedback period
     default: 'upcoming', // Default to 'upcoming'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when created
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when created
-  },
-});
+  }
+}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
 
 // Model export
 module.exports = mongoose.model('FeedbackPeriod', feedbackPeriodSchema);

@@ -22,15 +22,7 @@ const teachingAssignmentSchema = new mongoose.Schema({
         ref: 'FeedbackPeriod',
         required: true
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: { 
-        type: Date, 
-        default: Date.now 
-    }
-});
+}, { timestamps: true });
 
 teachingAssignmentSchema.index({ faculty: 1, subject: 1, class: 1, feedbackPeriod: 1 }, { unique: true });
 

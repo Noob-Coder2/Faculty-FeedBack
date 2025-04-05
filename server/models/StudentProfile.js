@@ -9,10 +9,24 @@ const studentProfileSchema = new mongoose.Schema({
     required: true, // The user is required
     unique: true, // Ensure each student profile is linked to only one user
   },
+  branch: {
+    type: String,
+    enum: ['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'], // Branch can be one of these values
+    required: true
+  },
+  semester: {
+    type: Number,
+    enum: [1, 2, 3, 4, 5, 6, 7, 8], // Semester can be one of these values
+    required: true // Semester is required
+  },
+  section: {
+    type: String,
+    enum: ['A', 'B', 'C'], // Section can be one of these values
+    required: true 
+  },
   class: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class', // Reference to the 'Class' model
-    required: true, // The class is required
   },
   admissionYear: {
     type: Number,
@@ -23,15 +37,10 @@ const studentProfileSchema = new mongoose.Schema({
     enum: ['active', 'graduated', 'inactive', 'dropped'], // Status can be 'active', 'graduated', 'inactive', or 'dropped'
     default: 'active', // Default status is 'active'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when the document is created
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Default to the current date and time when the document is created
-  },
-});
+  pendingMapping: {
+    type: Boolean,
+    default: true, // Default to false (no pending mapping)
+  }},{timestamps: true}); // Automatically manage createdAt and updatedAt fields
 
 // Model export
 module.exports = mongoose.model('StudentProfile', studentProfileSchema);

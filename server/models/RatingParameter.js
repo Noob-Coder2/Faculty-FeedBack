@@ -20,15 +20,7 @@ const ratingParameterSchema = new mongoose.Schema({
     type: Boolean,
     default: true, // The parameter is active by default
   },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Automatically set the creation timestamp
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Automatically set the updated timestamp
-  },
-});
+}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
 
 // Model export
 module.exports = mongoose.model('RatingParameter', ratingParameterSchema);

@@ -13,6 +13,11 @@ const facultyProfileSchema = new mongoose.Schema({
         required: [true, 'Department is required'],
         trim: true
     },
+    subjects: {
+        type: [String],
+        trim: true,
+        default: [],
+    },
     designation: {
         type: String,
         required: [true, 'Designation is required'],

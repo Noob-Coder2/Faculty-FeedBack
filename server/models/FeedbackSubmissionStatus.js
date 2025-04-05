@@ -17,15 +17,7 @@ const feedbackSubmissionStatusSchema = new mongoose.Schema({
     type: Boolean,
     default: false, // Indicates whether the student has submitted feedback
   },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Timestamp when the feedback submission status is created
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Timestamp when the feedback submission status was last updated
-  },
-});
+}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
 
 // Ensure uniqueness on the combination of student and teachingAssignment
 feedbackSubmissionStatusSchema.index(

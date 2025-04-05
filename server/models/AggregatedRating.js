@@ -24,16 +24,8 @@ const aggregatedRatingSchema = new mongoose.Schema({
   averageRating: {
     type: Number,
     default: 0, // Calculated average rating based on total responses and rating sum
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now, // Timestamp when the aggregated rating is created
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now, // Timestamp when the aggregated rating is last updated
-  },
-});
+  }
+}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
 
 // Ensure uniqueness on the combination of teachingAssignment and ratingParameter
 aggregatedRatingSchema.index(
