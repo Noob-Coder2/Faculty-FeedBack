@@ -30,7 +30,7 @@ router.post(
     body('branch').if(body('role').equals('student')).notEmpty().withMessage('Branch is required for students'),
     body('semester').if(body('role').equals('student')).notEmpty().withMessage('Semester is required for students'),
     body('section').if(body('role').equals('student')).notEmpty().withMessage('Section is required for students'),
-    body('class').if(body('role').equals('student')).optional().notEmpty().withMessage('Class name is optional but cannot be empty'),
+    body('className').if(body('role').equals('student')).optional().notEmpty().withMessage('Class name is optional but cannot be empty'),
     body('admissionYear').if(body('role').equals('student')).notEmpty().withMessage('Admission year is required for students'),
     // Faculty-specific fields
     body('department').if(body('role').equals('faculty')).notEmpty().withMessage('Department is required for faculty'),

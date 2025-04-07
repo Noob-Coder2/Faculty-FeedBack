@@ -43,7 +43,7 @@ router.get(
             }
 
             const teachingAssignments = await TeachingAssignment.find({
-                class: studentProfile.class,
+                class: studentProfile.classId,
                 feedbackPeriod: activeFeedbackPeriod._id,
             })
                 .populate('faculty', 'name')
@@ -101,7 +101,7 @@ router.post(
 
             // Verify teaching assignment
             const assignment = await TeachingAssignment.findById(teachingAssignment);
-            if (!assignment || assignment.class.toString() !== studentProfile.class.toString()) {
+            if (!assignment || assignment.class.toString() !== studentProfile.classId.toString()) {
                 return res.status(400).json({ message: 'Invalid teaching assignment for this student' });
             }
 
@@ -214,7 +214,7 @@ router.get(
             }
 
             const teachingAssignments = await TeachingAssignment.find({
-                class: studentProfile.class,
+                class: studentProfile.classId,
                 feedbackPeriod: targetFeedbackPeriod._id,
             });
 

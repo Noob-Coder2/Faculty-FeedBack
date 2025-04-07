@@ -23,7 +23,7 @@ router.post(
     [
         body('faculty').isMongoId().withMessage('Valid faculty ID is required'),
         body('subject').isMongoId().withMessage('Valid subject ID is required'),
-        body('class').isMongoId().withMessage('Valid class ID is required'),
+        body('classId').isMongoId().withMessage('Valid class ID is required'),
         body('feedbackPeriod').isMongoId().withMessage('Valid feedback period ID is required'),
     ],
     validate,
@@ -146,7 +146,7 @@ router.put(
         param('id').isMongoId().withMessage('Invalid teaching assignment ID'),
         body('faculty').optional().isMongoId().withMessage('Valid faculty ID is required'),
         body('subject').optional().isMongoId().withMessage('Valid subject ID is required'),
-        body('class').optional().isMongoId().withMessage('Valid class ID is required'),
+        body('classId').optional().isMongoId().withMessage('Valid class ID is required'),
         body('feedbackPeriod').optional().isMongoId().withMessage('Valid feedback period ID is required'),
     ],
     validate,
@@ -172,7 +172,7 @@ router.put(
                 }
             }
             if (updates.class) {
-                const classDoc = await Class.findById(updates.class);
+                const classDoc = await Class.findById(updates.classId);
                 if (!classDoc) {
                     return res.status(400).json({ message: 'Class not found' });
                 }

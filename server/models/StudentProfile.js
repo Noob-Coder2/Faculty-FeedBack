@@ -24,7 +24,7 @@ const studentProfileSchema = new mongoose.Schema({
     enum: ['A', 'B', 'C'], // Section can be one of these values
     required: true 
   },
-  class: {
+  classId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class', // Reference to the 'Class' model
   },
