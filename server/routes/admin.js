@@ -2,55 +2,61 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
+const validate = require('../middleware/validate');
+
+// Import models    
 const User = require('../models/User');
 const StudentProfile = require('../models/StudentProfile');
 const FacultyProfile = require('../models/FacultyProfile');
-
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
+const Subject = require('../models/Subject');
 
 // POST /api/admin/users - Create a new user (admin only)
 router.post(
     '/users',
     [
-        body('userId').notEmpty().withMessage('User ID is required'),
-        body('name').notEmpty().withMessage('Name is required'),
-        body('email').isEmail().withMessage('Valid email is required'),
+        // Validations with sanitization
+        body('userId').trim().notEmpty().withMessage('User ID is required'),
+        body('name').trim().escape().notEmpty().withMessage('Name is required'),
+        body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
         body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
         body('role').isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
         // Student-specific fields
         body('branch')
             .if(body('role').equals('student'))
+            .trim()
             .notEmpty()
+            .escape()
             .withMessage('Branch is required for students')
             .isIn(['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'])
             .withMessage('Branch must be one of: CSE, ECE, ME, CE, EE, CSE AIML, CSE DS'),
         body('semester')
             .if(body('role').equals('student'))
+            .trim()
+            .escape()
             .notEmpty()
             .withMessage('Semester is required for students')
             .isIn([1, 2, 3, 4, 5, 6, 7, 8])
             .withMessage('Semester must be between 1 and 8'),
         body('section')
             .if(body('role').equals('student'))
+            .trim()
+            .escape()
             .notEmpty()
             .withMessage('Section is required for students')
             .isIn(['A', 'B', 'C'])
             .withMessage('Section must be A, B, or C'),
         body('academicYear')
             .if(body('role').equals('student'))
+            .trim()
+            .escape()
             .notEmpty()
             .withMessage('Academic year is required for students')
             .matches(/^\d{4}-\d{4}$/)
             .withMessage('Academic year must be in the format YYYY-YYYY (e.g., 2024-2025)'),
         body('admissionYear')
             .if(body('role').equals('student'))
+            .trim()
+            .escape()
             .notEmpty()
             .withMessage('Admission year is required for students')
             .isInt({ min: 2000, max: new Date().getFullYear() })
@@ -58,25 +64,42 @@ router.post(
         // Faculty-specific fields
         body('department')
             .if(body('role').equals('faculty'))
+            .trim()
+            .escape()
             .notEmpty()
             .withMessage('Department is required for faculty'),
         body('subjects')
             .if(body('role').equals('faculty'))
             .optional()
             .isArray()
-            .withMessage('Subjects must be an array'),
+            .withMessage('Subjects must be an array')
+            .custom(async (subjects) => {
+                if (subjects.length === 0) return true; // Allow empty array
+                const validSubjects = await Subject.find({ _id: { $in: subjects } });
+                if (validSubjects.length !== subjects.length) {
+                    throw new Error('One or more subject IDs are invalid');
+                }
+                return true;
+            }),
+        body('subjects.*').isMongoId().withMessage('Each subject must be a valid MongoDB ID'),
         body('designation')
             .if(body('role').equals('faculty'))
             .notEmpty()
+            .trim()
+            .escape()
             .withMessage('Designation is required for faculty'),
         body('joiningYear')
             .if(body('role').equals('faculty'))
             .notEmpty()
+            .trim()
+            .escape()
             .withMessage('Joining year is required for faculty')
             .isInt({ min: 1900, max: new Date().getFullYear() })
             .withMessage('Joining year must be between 1900 and the current year'),
         body('qualifications')
             .if(body('role').equals('faculty'))
+            .trim()
+            .escape()
             .optional()
             .isArray()
             .withMessage('Qualifications must be an array'),
@@ -85,7 +108,7 @@ router.post(
     async (req, res) => {
         try {
             const {
-                userId, name, email, password, role, branch, semester, section, academicYear, admissionYear, 
+                userId, name, email, password, role, branch, semester, section, academicYear, admissionYear,
                 department, designation, joiningYear, qualifications, subjects,
             } = req.body;
 
@@ -213,11 +236,11 @@ router.put(
     '/users/:id',
     [
         param('id').isMongoId().withMessage('Invalid user ID'),
-        body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+        body('name').optional().trim().escape().notEmpty().withMessage('Name cannot be empty'),
         body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
         body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-        body('role').optional().isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
-        body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+        body('role').optional().trim().escape().isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
+        body('isActive').optional().trim().escape().isBoolean().withMessage('isActive must be a boolean'),
         // Student-specific fields with corrected conditional validation
         body('classId')  // Changed from 'class' to 'classId'
             .optional()
@@ -269,28 +292,30 @@ router.put(
             .optional()
             .isArray()
             .withMessage('Qualifications must be an array'),
+        body('subjects')
+            .optional()
+            .if((value, { req }) => req.body.role === 'faculty' || req.userRole === 'faculty')
+            .isArray()
+            .withMessage('Subjects must be an array')
+            .custom(async (subjects) => {
+                if (subjects.length === 0) return true;
+                const validSubjects = await Subject.find({ _id: { $in: subjects } });
+                if (validSubjects.length !== subjects.length) {
+                    throw new Error('One or more subject IDs are invalid');
+                }
+                return true;
+            }),
+        body('subjects.*').optional().isMongoId().withMessage('Each subject must be a valid MongoDB ID'),
     ],
     validate,
     async (req, res) => {
         try {
             const {
-                name,
-                email,
-                password,
-                role,
-                isActive,
-                classId,  // Changed from 'class' to 'classId'
-                branch,
-                semester,
-                section,
-                admissionYear,
-                status,
-                department,
-                designation,
-                joiningYear,
-                qualifications,
+                name, email, password, role, isActive, classId, branch, semester, section, admissionYear, status,
+                department, designation, joiningYear, qualifications, subjects,
             } = req.body;
 
+            
             const user = await User.findById(req.params.id);
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
@@ -335,7 +360,7 @@ router.put(
             }
 
             // Faculty profile updates
-            if (user.role === 'faculty' && (department || designation || joiningYear || qualifications)) {
+            if (user.role === 'faculty' && (department || designation || joiningYear || qualifications || subjects)) {
                 profile = await FacultyProfile.findOne({ user: user._id });
                 if (!profile) {
                     return res.status(400).json({ message: 'Faculty profile not found for this user' });
@@ -346,6 +371,7 @@ router.put(
                 if (designation) facultyUpdates.designation = designation;
                 if (joiningYear) facultyUpdates.joiningYear = joiningYear;
                 if (qualifications) facultyUpdates.qualifications = qualifications;
+                if (subjects) facultyUpdates.subjects = subjects; // Array of subject IDs
 
                 Object.assign(profile, facultyUpdates);
                 await profile.save();

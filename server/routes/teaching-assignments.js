@@ -2,20 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
+const validate = require('../middleware/validate');
 const TeachingAssignment = require('../models/TeachingAssignment');
 const User = require('../models/User');
 const Subject = require('../models/Subject');
 const Class = require('../models/Class');
 const FeedbackPeriod = require('../models/FeedbackPeriod');
 
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
 
 // POST /api/admin/teaching-assignments - Assign a faculty member to a subject and class for a feedback period
 router.post(

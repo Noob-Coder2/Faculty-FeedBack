@@ -60,11 +60,11 @@ const seedData = async () => {
     console.log('Feedback Periods seeded');
 
     const ratingParameters = [
-      { parameterId: 'PUNCTUALITY', questionText: 'Rate the faculty’s punctuality', order: 1 },
-      { parameterId: 'KNOWLEDGE', questionText: 'Rate the faculty’s subject knowledge', order: 2 },
-      { parameterId: 'ENGAGEMENT', questionText: 'Rate the faculty’s engagement with students', order: 3 },
-      { parameterId: 'CLARITY', questionText: 'Rate the faculty’s clarity in teaching', order: 4 },
-      { parameterId: 'SUPPORT', questionText: 'Rate the faculty’s supportiveness', order: 5 },
+      { parameterId: 'PUNCTUALITY', questionText: 'Rate the faculty\'s punctuality', order: 1 },
+      { parameterId: 'KNOWLEDGE', questionText: 'Rate the faculty\'s subject knowledge', order: 2 },
+      { parameterId: 'ENGAGEMENT', questionText: 'Rate the faculty\'s engagement with students', order: 3 },
+      { parameterId: 'CLARITY', questionText: 'Rate the faculty\'s clarity in teaching', order: 4 },
+      { parameterId: 'SUPPORT', questionText: 'Rate the faculty\'s supportiveness', order: 5 },
     ];
     await RatingParameter.insertMany(ratingParameters);
     console.log('Rating Parameters seeded');

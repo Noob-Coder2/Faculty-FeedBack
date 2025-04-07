@@ -14,7 +14,7 @@ const facultyProfileSchema = new mongoose.Schema({
         trim: true
     },
     subjects: {
-        type: [String],
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
         trim: true,
         default: [],
     },

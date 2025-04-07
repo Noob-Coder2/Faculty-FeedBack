@@ -18,6 +18,8 @@ const facultyRoutes = require('./routes/faculty');
 // Import middleware
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
+const validate = require('../middleware/validate');
+const loginLimiter = require('../middleware/ratelimiter');
 
 // Import models
 require('./models/Class');
@@ -46,6 +48,14 @@ app.use('/api/admin/feedback-periods', auth, checkRole(['admin']), feedbackPerio
 app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingAssignmentRoutes);
 app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
+app.use('/api/auth/login', loginLimiter, loginRoutes);
+
+
+// --- JWT Key Check ---
+if (!process.env.JWT_SECRET) {
+    console.error("FATAL ERROR: JWT_SECRET environment variable is not set.");
+    process.exit(1); // Exit the application if JWT secret is missing
+}
 
 // --- Database Connection ---
 const MONGO_URI = process.env.MONGODB_URI;

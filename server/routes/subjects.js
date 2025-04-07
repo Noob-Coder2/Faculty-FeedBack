@@ -2,24 +2,17 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
+const validate = require('../middleware/validate');
 const Subject = require('../models/Subject');
 
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
 
 // POST /api/admin/subjects - Add a new subject
 router.post(
     '/',
     [
-        body('subjectCode').trim().notEmpty().withMessage('Subject code is required'),
-        body('subjectName').trim().notEmpty().withMessage('Subject name is required'),
-        body('branch').trim().notEmpty().withMessage('Branch is required'),
+        body('subjectCode').trim().escape().notEmpty().withMessage('Subject code is required'),
+        body('subjectName').trim().escape().notEmpty().withMessage('Subject name is required'),
+        body('branch').trim().escape().notEmpty().withMessage('Branch is required'),
         body('semester').isInt({ min: 1, max: 8 }).withMessage('Semester must be between 1 and 8'),
     ],
     validate,
@@ -111,9 +104,9 @@ router.put(
     '/:id',
     [
         param('id').isMongoId().withMessage('Invalid subject ID'),
-        body('subjectCode').optional().trim().notEmpty().withMessage('Subject code cannot be empty'),
-        body('subjectName').optional().trim().notEmpty().withMessage('Subject name cannot be empty'),
-        body('branch').optional().trim().notEmpty().withMessage('Branch cannot be empty'),
+        body('subjectCode').optional().trim().escape().notEmpty().withMessage('Subject code cannot be empty'),
+        body('subjectName').optional().trim().escape().notEmpty().withMessage('Subject name cannot be empty'),
+        body('branch').optional().trim().escape().notEmpty().withMessage('Branch cannot be empty'),
         body('semester').optional().isInt({ min: 1, max: 8 }).withMessage('Semester must be between 1 and 8'),
     ],
     validate,

@@ -8,15 +8,8 @@ const FeedbackPeriod = require('../models/FeedbackPeriod');
 const Subject = require('../models/Subject');
 const Class = require('../models/Class');
 const RatingParameter = require('../models/RatingParameter');
+const validate = require('../middleware/validate');
 
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
 
 // Updated GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
 router.get(

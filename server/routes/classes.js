@@ -3,26 +3,18 @@ const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
 const Class = require('../models/Class');
-
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
+const validate = require('../middleware/validate');
 
 // POST /api/admin/classes - Create a new class
 router.post(
     '/',
     [
-        body('name').trim().notEmpty().withMessage('Class name is required'),
-        body('branch').trim().notEmpty().withMessage('Branch is required'),
-        body('semester').trim().notEmpty().withMessage('Semester is required'),
-        body('year').isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
-        body('section').trim().notEmpty().withMessage('Section is required'),
-        body('academicYear').trim().notEmpty().withMessage('Academic Year is required'),
+        body('name').trim().escape().notEmpty().withMessage('Class name is required'),
+        body('branch').trim().escape().notEmpty().withMessage('Branch is required'),
+        body('semester').trim().escape().notEmpty().withMessage('Semester is required'),
+        body('year').escape().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
+        body('section').trim().escape().notEmpty().withMessage('Section is required'),
+        body('academicYear').trim().escape().notEmpty().withMessage('Academic Year is required'),
     ],
     validate,
     async (req, res) => {
@@ -113,12 +105,12 @@ router.put(
     '/:id',
     [
         param('id').isMongoId().withMessage('Invalid class ID'),
-        body('name').optional().trim().notEmpty().withMessage('Class name cannot be empty'),
-        body('branch').optional().trim().notEmpty().withMessage('Branch cannot be empty'),
-        body('semester').optional().trim().notEmpty().withMessage('Semester cannot be empty'),
-        body('year').optional().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
-        body('section').optional().trim().notEmpty().withMessage('Section cannot be empty'),
-        body('academicYear').optional().trim().notEmpty().withMessage('Academic Year cannot be empty'),
+        body('name').optional().trim().escape().notEmpty().withMessage('Class name cannot be empty'),
+        body('branch').optional().trim().escape().notEmpty().withMessage('Branch cannot be empty'),
+        body('semester').optional().trim().escape().notEmpty().withMessage('Semester cannot be empty'),
+        body('year').optional().escape().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
+        body('section').optional().trim().escape().notEmpty().withMessage('Section cannot be empty'),
+        body('academicYear').optional().trim().escape().notEmpty().withMessage('Academic Year cannot be empty'),
     ],
     validate,
     async (req, res) => {

@@ -2,16 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
+const validate = require('../middleware/validate');
 const FeedbackPeriod = require('../models/FeedbackPeriod');
-
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
 
 // Function to determine status based on dates
 const determineStatus = (startDate, endDate) => {
@@ -25,12 +17,12 @@ const determineStatus = (startDate, endDate) => {
 router.post(
     '/',
     [
-        body('name').trim().notEmpty().withMessage('Feedback period name is required'),
-        body('semester').isInt({ min: 1, max: 12 }).withMessage('Semester must be between 1 and 12'),
-        body('year').isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
-        body('startDate').isISO8601().withMessage('Start date must be a valid ISO 8601 date'),
-        body('endDate').isISO8601().withMessage('End date must be a valid ISO 8601 date'),
-        body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+        body('name').trim().escape().notEmpty().withMessage('Feedback period name is required'),
+        body('semester').escape().isInt({ min: 1, max: 12 }).withMessage('Semester must be between 1 and 12'),
+        body('year').escape().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
+        body('startDate').isISO8601().escape().withMessage('Start date must be a valid ISO 8601 date'),
+        body('endDate').isISO8601().escape().withMessage('End date must be a valid ISO 8601 date'),
+        body('isActive').optional().escape().isBoolean().withMessage('isActive must be a boolean'),
         // Removed status from body validation since we'll set it automatically
     ],
     validate,
@@ -142,11 +134,11 @@ router.put(
     '/:id',
     [
         param('id').isMongoId().withMessage('Invalid feedback period ID'),
-        body('name').optional().trim().notEmpty().withMessage('Feedback period name cannot be empty'),
+        body('name').optional().trim().escape().notEmpty().withMessage('Feedback period name cannot be empty'),
         body('semester').optional().isInt({ min: 1, max: 12 }).withMessage('Semester must be between 1 and 12'),
         body('year').optional().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage('Year must be between 2000 and next year'),
-        body('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO 8601 date'),
-        body('endDate').optional().isISO8601().withMessage('End date must be a valid ISO 8601 date'),
+        body('startDate').optional().isISO8601().escape().withMessage('Start date must be a valid ISO 8601 date'),
+        body('endDate').optional().isISO8601().escape().withMessage('End date must be a valid ISO 8601 date'),
         body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
         // Removed status from body validation since we'll set it automatically
     ],

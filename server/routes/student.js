@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, param, validationResult } = require('express-validator');
+const validate = require('../middleware/validate');
 const TeachingAssignment = require('../models/TeachingAssignment');
 const FeedbackPeriod = require('../models/FeedbackPeriod');
 const FeedbackSubmissionStatus = require('../models/FeedbackSubmissionStatus');
@@ -10,14 +11,6 @@ const StudentProfile = require('../models/StudentProfile');
 const RatingParameter = require('../models/RatingParameter');
 const User = require('../models/User');
 
-// Middleware to handle validation errors
-const validate = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-    }
-    next();
-};
 
 // GET /api/student/assignments - List teaching assignments they can provide feedback on
 router.get(
