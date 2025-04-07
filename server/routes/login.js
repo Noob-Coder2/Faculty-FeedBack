@@ -1,7 +1,7 @@
 // server/routes/login.js
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -9,10 +9,18 @@ const StudentProfile = require('../models/StudentProfile');
 const FacultyProfile = require('../models/FacultyProfile');
 const Class = require('../models/Class');
 
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  }
+  next();
+};
+
 
 // POST /api/auth/login
 router.post(
-    '/login',
+    '/',
     [
       body('userId').notEmpty().withMessage('User ID is required'),
       body('password').notEmpty().withMessage('Password is required'),
@@ -60,3 +68,5 @@ router.post(
       }
     }
   );
+
+module.exports = router;

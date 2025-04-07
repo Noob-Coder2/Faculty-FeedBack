@@ -1,7 +1,7 @@
 // server/routes/register.js
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -19,7 +19,7 @@ const validate = (req, res, next) => {
 
 // POST /api/auth/register
 router.post(
-  '/register',
+  '/',
   [
     body('userId').notEmpty().withMessage('User ID is required'),
     body('name').notEmpty().withMessage('Name is required'),
