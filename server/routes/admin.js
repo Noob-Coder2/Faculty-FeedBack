@@ -19,23 +19,28 @@ const validate = (req, res, next) => {
 router.post(
     '/users',
     [
-        body('userId').trim().notEmpty().withMessage('User ID is required'),
-        body('name').trim().notEmpty().withMessage('Name is required'),
-        body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+        body('userId').notEmpty().withMessage('User ID is required'),
+        body('name').notEmpty().withMessage('Name is required'),
+        body('email').isEmail().withMessage('Valid email is required'),
         body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
         body('role').isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
-        // Student-specific validation
-        body('class').if(body('role').equals('student')).notEmpty().withMessage('Class is required for students'),
-        body('admissionYear').if(body('role').equals('student')).isInt({ min: 2000, max: new Date().getFullYear() }).withMessage('Valid admission year required for students'),
-        // Faculty-specific validation
+        // Student-specific fields
+        body('branch').if(body('role').equals('student')).notEmpty().withMessage('Branch is required for students'),
+        body('semester').if(body('role').equals('student')).notEmpty().withMessage('Semester is required for students'),
+        body('section').if(body('role').equals('student')).notEmpty().withMessage('Section is required for students'),
+        body('class').if(body('role').equals('student')).optional().notEmpty().withMessage('Class name is optional but cannot be empty'),
+        body('admissionYear').if(body('role').equals('student')).notEmpty().withMessage('Admission year is required for students'),
+        // Faculty-specific fields
         body('department').if(body('role').equals('faculty')).notEmpty().withMessage('Department is required for faculty'),
+        body('subjects').if(body('role').equals('faculty')).optional().isArray().withMessage('Subjects must be an array'),
         body('designation').if(body('role').equals('faculty')).notEmpty().withMessage('Designation is required for faculty'),
-        body('joiningYear').if(body('role').equals('faculty')).isInt({ min: 1900, max: new Date().getFullYear() }).withMessage('Valid joining year required for faculty'),
+        body('joiningYear').if(body('role').equals('faculty')).notEmpty().withMessage('Joining year is required for faculty'),
+        body('qualifications').if(body('role').equals('faculty')).optional().isArray().withMessage('Qualifications must be an array'),
     ],
     validate,
     async (req, res) => {
         try {
-            const { userId, name, email, password, role, class: classId, admissionYear, department, designation, joiningYear, qualifications } = req.body;
+            const { userId, name, email, password, role, class: classId, admissionYear, department, designation, joiningYear, qualifications, subjects } = req.body;
 
             // Check for existing user
             const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
@@ -53,6 +58,7 @@ router.post(
             } else if (role === 'faculty') {
                 await FacultyProfile.create({
                     user: savedUser._id,
+                    subjects: subjects || [],
                     department,
                     designation,
                     joiningYear,
@@ -188,19 +194,19 @@ router.put(
     validate,
     async (req, res) => {
         try {
-            const { 
-                name, 
-                email, 
-                password, 
-                role, 
-                isActive, 
-                class: classId, 
-                admissionYear, 
-                status, 
-                department, 
-                designation, 
-                joiningYear, 
-                qualifications 
+            const {
+                name,
+                email,
+                password,
+                role,
+                isActive,
+                class: classId,
+                admissionYear,
+                status,
+                department,
+                designation,
+                joiningYear,
+                qualifications
             } = req.body;
 
             const user = await User.findById(req.params.id);
@@ -306,5 +312,47 @@ router.delete(
         }
     }
 );
+
+// GET /api/admin/pending-students
+router.get('/pending-students', async (req, res) => {
+    try {
+        const pendingStudents = await StudentProfile.find({ pendingMapping: true })
+            .populate('user', 'userId email');
+        res.status(200).json({ message: 'Pending students retrieved', students: pendingStudents });
+    } catch (error) {
+        console.error('Get Pending Students Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+// PUT /api/admin/map-student/:id - Manually map a student to a class.
+
+router.put('/map-student/:id', [
+    param('id').isMongoId().withMessage('Valid student profile ID required'),
+    body('classId').isMongoId().withMessage('Valid class ID required'),
+], validate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { classId } = req.body;
+
+        const studentProfile = await StudentProfile.findById(id);
+        if (!studentProfile) return res.status(404).json({ message: 'Student profile not found' });
+
+        const classDoc = await Class.findById(classId);
+        if (!classDoc) return res.status(404).json({ message: 'Class not found' });
+
+        studentProfile.classId = classId;
+        studentProfile.pendingMapping = false;
+        await studentProfile.save();
+
+        res.status(200).json({ message: 'Student mapped successfully', studentProfile });
+    } catch (error) {
+        console.error('Map Student Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
 
 module.exports = router;
