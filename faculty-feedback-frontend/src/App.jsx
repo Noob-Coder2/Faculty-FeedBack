@@ -1,12 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        {/* Add more routes later for student, faculty, and admin dashboards */}
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        {/* Add more routes later for student & faculty dashboards */}
       </Routes>
     </Router>
   );
