@@ -18,8 +18,8 @@ const facultyRoutes = require('./routes/faculty');
 // Import middleware
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
-const validate = require('../middleware/validate');
-const loginLimiter = require('../middleware/ratelimiter');
+const validate = require('./middleware/validate');
+const loginLimiter = require('./middleware/ratelimiter');
 
 // Import models
 require('./models/Class');
