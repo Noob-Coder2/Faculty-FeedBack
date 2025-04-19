@@ -1,3 +1,5 @@
+//src/pages/AdminDashboard.jsx
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUsers, getClasses, getTeachingAssignments } from '../services/api';

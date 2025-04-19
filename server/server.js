@@ -8,6 +8,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const registerRoutes = require('./routes/register'); // Import registration routes
 const loginRoutes = require('./routes/login'); // Import login routes
 const adminRoutes = require('./routes/admin');
+const facultyRatingsRoutes = require('./routes/faculty-ratings');
 const classRoutes = require('./routes/classes');
 const subjectRoutes = require('./routes/subjects');
 const feedbackPeriodRoutes = require('./routes/feedback-periods');
@@ -49,6 +50,7 @@ app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingA
 app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
 app.use('/api/auth/login', loginLimiter, loginRoutes);
+app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
 
 
 // --- JWT Key Check ---
