@@ -11,7 +11,7 @@ const RatingParameter = require('../models/RatingParameter');
 const validate = require('../middleware/validate');
 
 
-// Updated GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
+// GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
 router.get(
     '/ratings',
     [
@@ -110,5 +110,56 @@ router.get(
         }
     }
 );
+
+// GET /api/faculty/search?name=<query> - Search faculty by name (shared: admin, faculty, student)
+router.get(
+    '/search',
+    [
+        auth,
+        query('name')
+            .trim()
+            .notEmpty()
+            .withMessage('Search query is required')
+            .isLength({ min: 2 })
+            .withMessage('Search query must be at least 2 characters'),
+        query('page').optional().isInt({ min: 1 }).toInt().withMessage('Page must be a positive integer'),
+        query('limit').optional().isInt({ min: 1, max: 50 }).toInt().withMessage('Limit must be between 1 and 50'),
+    ],
+    validate,
+    async (req, res) => {
+        try {
+            const { name, page = 1, limit = 10 } = req.query;
+
+            // Case-insensitive regex search for faculty names
+            const searchRegex = new RegExp(name, 'i');
+            const query = { role: 'faculty', name: { $regex: searchRegex } };
+
+            // Fetch matching faculty with pagination
+            const faculty = await User.find(query)
+                .select('_id name')
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean();
+
+            // Get total count for pagination
+            const total = await User.countDocuments(query);
+
+            res.status(200).json({
+                message: 'Faculty search completed successfully',
+                data: faculty.map(f => ({ id: f._id, name: f.name })),
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                },
+            });
+        } catch (error) {
+            console.error('Faculty Search Error:', error);
+            res.status(500).json({ message: 'Server error during faculty search' });
+        }
+    }
+);
+
 
 module.exports = router;
