@@ -14,21 +14,54 @@ const schema = z.object({
   email: z.string().email('Valid email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['student', 'faculty'], { message: 'Role must be student or faculty' }),
-  branch: z.string().optional().refine((val) => (val ? ['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'].includes(val) : true), {
-    message: 'Invalid branch',
-  }),
-  semester: z.number().optional().min(1).max(8),
-  section: z.string().optional().refine((val) => (val ? ['A', 'B', 'C'].includes(val) : true), { message: 'Invalid section' }),
-  admissionYear: z.number().optional().min(2000).max(new Date().getFullYear()),
+  branch: z
+    .string()
+    .optional()
+    .refine(
+      (val) => (val ? ['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'].includes(val) : true),
+      { message: 'Invalid branch' }
+    ),
+  semester: z.number().min(1, 'Semester must be at least 1').max(8, 'Semester must not exceed 8').optional(),
+  section: z
+    .string()
+    .optional()
+    .refine((val) => (val ? ['A', 'B', 'C'].includes(val) : true), { message: 'Invalid section' }),
+  admissionYear: z
+    .number()
+    .min(2000, 'Admission year must be at least 2000')
+    .max(new Date().getFullYear(), `Admission year cannot be in the future`)
+    .optional(),
   department: z.string().optional(),
   designation: z.string().optional(),
-  joiningYear: z.number().optional().min(1900).max(new Date().getFullYear()),
+  joiningYear: z
+    .number()
+    .min(1900, 'Joining year must be at least 1900')
+    .max(new Date().getFullYear(), `Joining year cannot be in the future`)
+    .optional(),
 });
 
 function Register() {
-  const { control, handleSubmit, watch, formState: { errors } } = useForm({
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { userId: '', name: '', email: '', password: '', role: '' },
+    defaultValues: {
+      userId: '',
+      name: '',
+      email: '',
+      password: '',
+      role: '',
+      branch: '',
+      semester: '',
+      section: '',
+      admissionYear: '',
+      department: '',
+      designation: '',
+      joiningYear: '',
+    },
   });
   const role = watch('role');
   const navigate = useNavigate();
@@ -36,17 +69,24 @@ function Register() {
 
   const onSubmit = async (data) => {
     try {
-      const response = await register(data);
-      dispatch(loginUser({ userId: data.userId, password: data.password }));
+      // Convert empty strings to undefined for optional fields
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [key, value === '' ? undefined : value])
+      );
+      const response = await register(cleanedData);
+      await dispatch(loginUser({ userId: data.userId, password: data.password })).unwrap();
       navigate(`/${data.role}-dashboard`);
     } catch (err) {
-      console.error(err);
+      console.error('Registration error:', err.message);
+      // Optionally show a toast notification here
     }
   };
 
   return (
     <Box sx={{ maxWidth: 400, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom>Register</Typography>
+      <Typography variant="h4" gutterBottom>
+        Register
+      </Typography>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="userId"
@@ -139,7 +179,9 @@ function Register() {
                   helperText={errors.branch?.message}
                 >
                   {['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'].map((b) => (
-                    <MenuItem key={b} value={b}>{b}</MenuItem>
+                    <MenuItem key={b} value={b}>
+                      {b}
+                    </MenuItem>
                   ))}
                 </TextField>
               )}
@@ -156,6 +198,7 @@ function Register() {
                   margin="normal"
                   error={!!errors.semester}
                   helperText={errors.semester?.message}
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : '')}
                 />
               )}
             />
@@ -173,7 +216,9 @@ function Register() {
                   helperText={errors.section?.message}
                 >
                   {['A', 'B', 'C'].map((s) => (
-                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
                   ))}
                 </TextField>
               )}
@@ -190,6 +235,7 @@ function Register() {
                   margin="normal"
                   error={!!errors.admissionYear}
                   helperText={errors.admissionYear?.message}
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : '')}
                 />
               )}
             />
@@ -237,6 +283,7 @@ function Register() {
                   margin="normal"
                   error={!!errors.joiningYear}
                   helperText={errors.joiningYear?.message}
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : '')}
                 />
               )}
             />

@@ -1,7 +1,7 @@
 // src/components/shared/ChangePasswordPage.jsx
 import { useState } from 'react';
 import { Box, Typography, TextField, Button } from '@mui/material';
-import { changePassword } from '../services/api';
+import { changePassword } from '../../services/api';
 import { useSelector } from 'react-redux';
 
 function ChangePasswordPage() {

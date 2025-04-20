@@ -1,9 +1,9 @@
 // src/pages/StudentDashboard.jsx
 import { useState } from 'react';
-import DashboardLayout from '../components/DashboardLayout';
+import DashboardLayout from '../components/Shared/DashboardLayout';
 import ProfilePage from '../components/ProfilePage';
 import FeedbackPage from '../components/FeedbackPage';
-import ChangePasswordPage from '../components/ChangePasswordPage';
+import ChangePasswordPage from '../components/Shared/ChangePasswordPage';
 
 function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
