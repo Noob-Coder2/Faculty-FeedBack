@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:5001/api'; // <-- Adjust port if needed
 const login = async (userId, password) => {
   try {
     // Make POST request to the login endpoint, sending userId
-    const response = await axios.post(`${API_URL}/login`, { // <-- Adjust endpoint if needed
+    const response = await axios.post(`${API_URL}/auth/login`, { // <-- Adjust endpoint if needed
       userId, // <--- Changed from email
       password,
     });
