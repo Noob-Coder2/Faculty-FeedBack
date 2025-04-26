@@ -1,12 +1,11 @@
-// Import necessary packages
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 
 // Import routes
-const registerRoutes = require('./routes/register'); // Import registration routes
-const loginRoutes = require('./routes/login'); // Import login routes
+const registerRoutes = require('./routes/register');
+const loginRoutes = require('./routes/login');
 const adminRoutes = require('./routes/admin');
 const facultyRatingsRoutes = require('./routes/faculty-ratings');
 const classRoutes = require('./routes/classes');
@@ -27,21 +26,58 @@ require('./models/Class');
 require('./models/Subject');
 require('./models/TeachingAssignment');
 require('./models/FeedbackPeriod');
-require('./models/FeedbackSubmissionStatus');
 require('./models/RatingParameter');
 require('./models/AggregatedRating');
 require('./models/User');
 require('./models/StudentProfile');
 require('./models/FacultyProfile');
 
-
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5001; // Use port from env file or default to 5001
+const PORT = process.env.PORT || 5001;
+
+// Log raw request body and headers for debugging purposes
+// Remove this in production
+app.use((req, res, next) => {
+    let rawBody = '';
+    const originalOn = req.on;
+  
+    req.on = function (event, listener) {
+      if (event === 'data') {
+        return originalOn.call(this, event, (chunk) => {
+          rawBody += chunk.toString();
+          listener(chunk);
+        });
+      }
+      if (event === 'end') {
+        return originalOn.call(this, event, () => {
+          console.log('Raw Request Body:', rawBody || 'Empty');
+          console.log('Request Headers:', req.headers);
+          listener();
+        });
+      }
+      return originalOn.apply(this, arguments);
+    };
+  
+    next();
+  });
+
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse JSON request bodies
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use((req, res, next) => {
+  if (req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) {
+    console.log('Invalid Content-Type:', req.headers['content-type']);
+    return res.status(400).json({ message: 'Content-Type must be application/json' });
+  }
+  next();
+});
+app.use(express.json({ strict: true, limit: '50kb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth/register', registerRoutes);
+app.use('/api/auth/login', loginLimiter, loginRoutes);
 app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
 app.use('/api/admin/classes', auth, checkRole(['admin']), classRoutes);
 app.use('/api/admin/subjects', auth, checkRole(['admin']), subjectRoutes);
@@ -49,54 +85,49 @@ app.use('/api/admin/feedback-periods', auth, checkRole(['admin']), feedbackPerio
 app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingAssignmentRoutes);
 app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
-app.use('/api/auth/login', loginLimiter, loginRoutes);
 app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
 
+// Example protected route
+app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
+  res.json({ message: 'Welcome, admin!', user: req.user });
+});
 
-// --- JWT Key Check ---
+// Error handling for JSON parsing errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('JSON Parse Error:', err.message);
+    return res.status(400).json({ message: 'Invalid JSON payload' });
+  }
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something broke!' });
+});
+
+// JWT Key Check
 if (!process.env.JWT_SECRET) {
-    console.error("FATAL ERROR: JWT_SECRET environment variable is not set.");
-    process.exit(1); // Exit the application if JWT secret is missing
+  console.error('FATAL ERROR: JWT_SECRET environment variable is not set.');
+  process.exit(1);
 }
 
-// --- Database Connection ---
+// Database Connection
 const MONGO_URI = process.env.MONGODB_URI;
-
 if (!MONGO_URI) {
-    console.error("FATAL ERROR: MONGODB_URI environment variable is not set.");
-    process.exit(1); // Exit the application if connection string is missing
+  console.error('FATAL ERROR: MONGODB_URI environment variable is not set.');
+  process.exit(1);
 }
 
 mongoose.connect(MONGO_URI)
-    .then(() => console.log('Successfully connected to MongoDB Atlas!'))
-    .catch(err => {
-        console.error('MongoDB connection error:', err);
-        process.exit(1); // Exit if connection fails
-    });
-
-// --- Basic Routes ---
-app.get('/', (req, res) => {
-    res.send('Faculty Feedback System Backend is Running!');
-});
-
-// --- API Routes --- 
-app.use('/api/auth/register', registerRoutes); // Mount register routes
-app.use('/api/auth/login', loginRoutes); // Mount login routes
-
-// Example protected route (we’ll add more later)
-app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
-    res.json({ message: 'Welcome, admin!', user: req.user });
-});
-
-// --- Add a basic error handler ---
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+  .then(() => console.log('Successfully connected to MongoDB Atlas!'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
   });
 
-
-// --- Start the Server ---
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+// Basic Route
+app.get('/', (req, res) => {
+  res.send('Faculty Feedback System Backend is Running!');
 });
 
+// Start the Server
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
