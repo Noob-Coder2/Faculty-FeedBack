@@ -9,6 +9,7 @@ const Subject = require('../models/Subject');
 const Class = require('../models/Class');
 const RatingParameter = require('../models/RatingParameter');
 const validate = require('../middleware/validate');
+const auth = require('../middleware/auth');
 
 
 // GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
