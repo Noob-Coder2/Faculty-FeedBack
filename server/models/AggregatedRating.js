@@ -1,3 +1,5 @@
+// server/models/AggregatedRating.js
+
 const mongoose = require('mongoose');
 
 const aggregatedRatingSchema = new mongoose.Schema({

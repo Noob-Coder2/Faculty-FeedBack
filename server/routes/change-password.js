@@ -1,4 +1,4 @@
-// server/routes/auth.js
+// server/routes/change-password.js
 
 const express = require('express');
 const router = express.Router();

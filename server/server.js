@@ -1,8 +1,12 @@
+// server/server.js
+
+// import necessary modules
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+// import routes
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
 const adminRoutes = require('./routes/admin');
@@ -14,12 +18,15 @@ const teachingAssignmentRoutes = require('./routes/teaching-assignments');
 const studentRoutes = require('./routes/student');
 const facultyRoutes = require('./routes/faculty');
 const profileRoutes = require('./routes/profile');
+const changePasswordRoutes = require('./routes/change-password');
 
+// import middleware
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
 const validate = require('./middleware/validate');
 const loginLimiter = require('./middleware/ratelimiter');
 
+// import models
 require('./models/Class');
 require('./models/Subject');
 require('./models/TeachingAssignment');
@@ -30,9 +37,12 @@ require('./models/User');
 require('./models/StudentProfile');
 require('./models/FacultyProfile');
 
+// import utils
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Middleware
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -44,6 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// Routes
 app.use('/api/auth/register', registerRoutes);
 app.use('/api/auth/login', loginLimiter, loginRoutes);
 app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
@@ -55,7 +67,9 @@ app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
 app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
 app.use('/api/auth', profileRoutes);
+app.use('/api/user', auth, changePasswordRoutes);
 
+// Test route for checking authentication and role middleware
 app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
   res.json({ message: 'Welcome, admin!', user: req.user });
 });
@@ -69,17 +83,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something broke!' });
 });
 
+// Check for required environment variables
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET environment variable is not set.');
   process.exit(1);
 }
 
+// Check for MongoDB URI
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
   console.error('FATAL ERROR: MONGODB_URI environment variable is not set.');
   process.exit(1);
 }
 
+// Connect to MongoDB Atlas
 mongoose.connect(MONGO_URI)
   .then(() => console.log('Successfully connected to MongoDB Atlas!'))
   .catch(err => {
@@ -91,6 +108,7 @@ app.get('/', (req, res) => {
   res.send('Faculty Feedback System Backend is Running!');
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
