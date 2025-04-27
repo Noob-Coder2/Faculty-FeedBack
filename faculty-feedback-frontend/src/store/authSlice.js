@@ -1,13 +1,19 @@
 // src/store/authSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { login, getUserProfile } from '../services/api';
 
-export const loginUser = createAsyncThunk('auth/login', async ({ userId, password }, { rejectWithValue }) => {
+export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWithValue }) => {
   try {
-    const data = await login(userId, password);
-    localStorage.setItem('token', data.token);
-    const profile = await getUserProfile(data.token); // Assume endpoint exists
-    return { token: data.token, user: profile };
+    console.log('loginUser data:', data);
+    const response = await login(data);
+    localStorage.setItem('token', response.token);
+    const profile = await getUserProfile(response.token);
+    console.log('User Profile:', profile); // Debug user profile
+    if (!profile) {
+      throw new Error('Failed to fetch user profile');
+    }
+    return { token: response.token, user: profile, role: response.role }; 
   } catch (error) {
     return rejectWithValue(error.message);
   }
@@ -33,6 +39,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        state.role = action.payload.role; // Store role in state
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

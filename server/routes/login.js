@@ -21,12 +21,12 @@ router.post(
     validate,
     async (req, res) => {
       try {
-        const { userId, password } = req.body;
         console.log('Login Request Body:', req.body);
+        const { userId, password } = req.body;
 
         // Find user
         const user = await User.findOne({ userId });
-        if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+        if (!user) return res.status(400).json({ message: 'No User Found' });
   
         // Check password
         const isMatch = await bcrypt.compare(password, user.password);
@@ -54,8 +54,9 @@ router.post(
         }
   
         // Generate JWT
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ message: 'Login successful', token });
+        const token = jwt.sign({ id: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        console.log('Token Payload:', token);
+        res.status(200).json({ message: 'Login successful', token, userId: user.userId, role: user.role });
       } catch (error) {
         console.error('Login Error:', error);
         res.status(500).json({ message: 'Server error during login' });

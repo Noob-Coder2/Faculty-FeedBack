@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// Import routes
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
 const adminRoutes = require('./routes/admin');
@@ -14,14 +13,13 @@ const feedbackPeriodRoutes = require('./routes/feedback-periods');
 const teachingAssignmentRoutes = require('./routes/teaching-assignments');
 const studentRoutes = require('./routes/student');
 const facultyRoutes = require('./routes/faculty');
+const profileRoutes = require('./routes/profile');
 
-// Import middleware
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
 const validate = require('./middleware/validate');
 const loginLimiter = require('./middleware/ratelimiter');
 
-// Import models
 require('./models/Class');
 require('./models/Subject');
 require('./models/TeachingAssignment');
@@ -32,50 +30,20 @@ require('./models/User');
 require('./models/StudentProfile');
 require('./models/FacultyProfile');
 
-// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Log raw request body and headers for debugging purposes
-// Remove this in production
-app.use((req, res, next) => {
-    let rawBody = '';
-    const originalOn = req.on;
-  
-    req.on = function (event, listener) {
-      if (event === 'data') {
-        return originalOn.call(this, event, (chunk) => {
-          rawBody += chunk.toString();
-          listener(chunk);
-        });
-      }
-      if (event === 'end') {
-        return originalOn.call(this, event, () => {
-          console.log('Raw Request Body:', rawBody || 'Empty');
-          console.log('Request Headers:', req.headers);
-          listener();
-        });
-      }
-      return originalOn.apply(this, arguments);
-    };
-  
-    next();
-  });
-
-
-// Middleware
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-app.use((req, res, next) => {
-  if (req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) {
-    console.log('Invalid Content-Type:', req.headers['content-type']);
-    return res.status(400).json({ message: 'Content-Type must be application/json' });
-  }
-  next();
-});
-app.use(express.json({ strict: true, limit: '50kb' }));
+app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Log parsed body *after* express.json()
+app.use((req, res, next) => {
+  console.log('Request Headers:', req.headers);
+  console.log('Raw Request Body:', req.body ? JSON.stringify(req.body) : 'Empty');
+  next();
+});
+
 app.use('/api/auth/register', registerRoutes);
 app.use('/api/auth/login', loginLimiter, loginRoutes);
 app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
@@ -86,13 +54,12 @@ app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingA
 app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
 app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
+app.use('/api/auth', profileRoutes);
 
-// Example protected route
 app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
   res.json({ message: 'Welcome, admin!', user: req.user });
 });
 
-// Error handling for JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('JSON Parse Error:', err.message);
@@ -102,13 +69,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something broke!' });
 });
 
-// JWT Key Check
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET environment variable is not set.');
   process.exit(1);
 }
 
-// Database Connection
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
   console.error('FATAL ERROR: MONGODB_URI environment variable is not set.');
@@ -122,12 +87,10 @@ mongoose.connect(MONGO_URI)
     process.exit(1);
   });
 
-// Basic Route
 app.get('/', (req, res) => {
   res.send('Faculty Feedback System Backend is Running!');
 });
 
-// Start the Server
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });

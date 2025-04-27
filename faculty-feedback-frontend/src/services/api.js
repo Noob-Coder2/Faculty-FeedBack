@@ -1,87 +1,33 @@
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import { createApiInstance, handleError } from '../utils/apiUtils';
+import { getCacheKey, getCachedResponse, setCachedResponse, CACHE_TTL, getCachedProfile, setCachedProfile, cache } from '../utils/cache';
 
-// In-memory cache
-const cache = new Map();
-const CACHE_TTL = {
-  profile: 60 * 60 * 1000, // 1 hour for user profile
-  ratings: 5 * 60 * 1000, // 5 minutes for faculty ratings
-  search: 10 * 60 * 1000, // 10 minutes for faculty search
-  assignments: 2 * 60 * 1000, // 2 minutes for student assignments
-};
-
-// Persistent cache for user profile
-const LOCAL_STORAGE_KEY = 'faculty_feedback_cache';
-
-// Axios instance
-const api = axios.create({
-  baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Configure retries
-axiosRetry(api, {
-  retries: 3,
-  retryDelay: (retryCount) => axiosRetry.exponentialDelay(retryCount),
-  retryCondition: (error) => {
-    // Retry on network errors or 5xx server errors
-    return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.response?.status >= 500;
-  },
-});
-
-// Add interceptor for token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Cache handling
-const getCacheKey = (method, url, params) => {
-  const paramString = params ? JSON.stringify(params) : '';
-  return `${method}:${url}:${paramString}`;
-};
-
-const getCachedResponse = (key, ttl) => {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < ttl) {
-    return cached.data;
-  }
-  return null;
-};
-
-const setCachedResponse = (key, data, ttl) => {
-  cache.set(key, { data, timestamp: Date.now() });
-};
-
-// Local storage for user profile
-const getCachedProfile = () => {
-  const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (cached) {
-    const { data, timestamp } = JSON.parse(cached);
-    if (Date.now() - timestamp < CACHE_TTL.profile) {
-      return data;
-    }
-  }
-  return null;
-};
-
-const setCachedProfile = (data) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-};
-
-// Centralized error handling
-const handleError = (error) => {
-  const message = error.response?.data?.message || 'An unexpected error occurred';
-  throw new Error(message);
-};
+const api = createApiInstance();
 
 // API functions with caching and retries
 // Authentication APIs
+
+export const login = async (data) => {
+  console.log('Received login data:', data);
+  if (!data) {
+    throw { error: true, message: 'Login data is required' };
+  }
+  const userId = data.userId ?? '';
+  const password = data.password ?? '';
+  if (typeof userId !== 'string' || userId.trim() === '') {
+    throw { error: true, message: 'User ID is required and must be a non-empty string' };
+  }
+  if (typeof password !== 'string' || password.trim() === '') {
+    throw { error: true, message: 'Password is required and must be a non-empty string' };
+  }
+  try {
+    const response = await api.post('/auth/login', { userId, password });
+    return response.data;
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+
 export const register = async (data) => {
   try {
     const response = await api.post('/auth/register', data);
@@ -91,14 +37,6 @@ export const register = async (data) => {
   }
 };
 
-export const login = async (data) => {
-  try {
-    const response = await api.post('/auth/login', data);
-    return response.data;
-  } catch (error) {
-    handleError(error);
-  }
-};
 
 export const changePassword = async (data) => {
   try {
