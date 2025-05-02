@@ -2,6 +2,8 @@
 
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/authSlice';
 
 export const createApiInstance = () => {
     // Axios instance with retry logic
@@ -27,6 +29,19 @@ export const createApiInstance = () => {
         }
         return config;
     });
+
+    api.interceptors.response.use(
+        (response) => response,
+        (error) => {
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            useDispatch(logout()); // Clear Redux
+            window.location.href = '/login'; // Redirect
+          }
+          return Promise.reject(error);
+        }
+      );
 
     return api;
 };

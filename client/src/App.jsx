@@ -4,12 +4,13 @@ import { Snackbar, Alert } from '@mui/material';
 import Login from './pages/Login';
 import FacultyRatings from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import StudentDashboard from './pages/StudentDashboard';
+import Register from './pages/Register';
 
-export const ErrorContext = React.createContext();
+const ErrorContext = React.createContext();
 
 const App = () => {
   const [error, setError] = useState(null);
-
   const handleClose = () => setError(null);
 
   return (
@@ -19,8 +20,9 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/faculty-ratings/:facultyId" element={<FacultyRatings />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/student-dashboard" element={<div>Student Dashboard</div>} />
+          <Route path="/student-dashboard" element={<StudentDashboard/>} />
           <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
         <Snackbar open={!!error} autoHideDuration={6000} onClose={handleClose}>
           <Alert onClose={handleClose} severity="error" sx={{ width: '100%' }}>

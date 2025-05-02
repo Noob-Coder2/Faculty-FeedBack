@@ -5,9 +5,9 @@ const router = express.Router();
 const { body} = require('express-validator');
 const validate = require('../middleware/validate');
 
-// Import models    
+// Import model and middleware
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 
 // PUT /api/user/change-password - Change user password
