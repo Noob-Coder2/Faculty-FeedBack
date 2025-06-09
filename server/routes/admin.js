@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
 const validate = require('../middleware/validate');
+const logger = require('../utils/logger');
 
 // Import models    
 const User = require('../models/User');
@@ -106,6 +107,7 @@ router.post(
     ],
     validate,
     async (req, res) => {
+        logger.debugWithContext('Received request to create user', req, { userId: req.body.userId, role: req.body.role });
         try {
             const {
                 userId, name, email, password, role, branch, semester, section, academicYear, admissionYear,
@@ -115,9 +117,10 @@ router.post(
             // Check for existing user
             const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
             if (existingUser) {
+                logger.warnWithContext('User creation failed: User ID or Email already exists', req, { userId, email });
                 return res.status(400).json({ message: 'User ID or Email already exists' });
             }
-
+            
             // Create user
             const newUser = new User({ userId, name, email, password, role });
             const savedUser = await newUser.save();
@@ -153,12 +156,16 @@ router.post(
                 });
             }
 
+            logger.infoWithContext('User created successfully', req, { userId, role, userMongoId: savedUser._id }); // Log success
             res.status(201).json({
                 message: 'User created successfully!',
                 user: { id: savedUser._id, userId, name, email, role },
             });
         } catch (error) {
-            console.error('Admin User Creation Error:', error);
+            logger.errorWithContext('User creation error', req, error);
+            if (error.code === 11000) { // Duplicate key error (MongoDB)
+                return res.status(400).json({ message: 'User ID or Email already exists' });
+            }
             res.status(500).json({ message: 'Server error during user creation' });
         }
     }
@@ -173,6 +180,8 @@ router.get(
     ],
     validate,
     async (req, res) => {
+        logger.debugWithContext('Received request to list users', req, {});
+        
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;

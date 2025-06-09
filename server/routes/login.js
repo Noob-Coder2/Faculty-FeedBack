@@ -9,6 +9,7 @@ const User = require('../models/User');
 const StudentProfile = require('../models/StudentProfile');
 const FacultyProfile = require('../models/FacultyProfile');
 const Class = require('../models/Class');
+const logger = require('../utils/logger');
 
 
 // POST /api/auth/login
@@ -21,17 +22,23 @@ router.post(
     validate,
     async (req, res) => {
       try {
-        console.log('Login Request Body:', req.body);
+        logger.debugWithContext('Login attempt', req, { userId: req.body.userId });
         const { userId, password } = req.body;
 
         // Find user
         const user = await User.findOne({ userId });
-        if (!user) return res.status(400).json({ message: 'No User Found' });
+        if (!user) {
+          logger.errorWithContext('Invalid credentials: user not found', req, { userId });
+          return res.status(401).json({ message: 'USER NOT FOUND' });
+        }
   
         // Check password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-  
+      if (!isMatch) {
+        logger.errorWithContext('Invalid credentials: password mismatch', req, { userId });
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
         // For students, check and update mapping
         if (user.role === 'student') {
           const studentProfile = await StudentProfile.findOne({ user: user._id });
@@ -55,10 +62,10 @@ router.post(
   
         // Generate JWT
         const token = jwt.sign({ id: user.userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        console.log('Token Payload:', token);
+        logger.infoWithContext('Login successful', req, { userId, role: user.role });
         res.status(200).json({ message: 'Login successful', token, userId: user.userId, role: user.role });
       } catch (error) {
-        console.error('Login Error:', error);
+        logger.errorWithContext('Login error', req, err);
         res.status(500).json({ message: 'Server error during login' });
       }
     }
