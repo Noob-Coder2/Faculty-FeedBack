@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { useDispatch } from 'react-redux';
+import { store } from '../store/store';
 import { logout } from '../store/authSlice';
 
 export const createApiInstance = () => {
@@ -12,6 +12,7 @@ export const createApiInstance = () => {
         headers: {
             'Content-Type': 'application/json',
         },
+        withCredentials: true, // Important: needed for cookies
     });
 
     axiosRetry(api, {
@@ -32,16 +33,16 @@ export const createApiInstance = () => {
 
     api.interceptors.response.use(
         (response) => response,
-        (error) => {
-          if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            useDispatch(logout()); // Clear Redux
-            window.location.href = '/login'; // Redirect
-          }
-          return Promise.reject(error);
+        async (error) => {
+            if (error.response?.status === 401) {
+                // Clear redux state
+                store.dispatch(logout());
+                // Redirect to login
+                window.location.href = '/login';
+            }
+            return Promise.reject(error);
         }
-      );
+    );
 
     return api;
 };

@@ -3,34 +3,64 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { login, getUserProfile } from '../services/api';
 
-export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWithValue }) => {
-  try {
-    console.log('loginUser data:', data);
-    const response = await login(data);
-    localStorage.setItem('token', response.token);
-    const profile = await getUserProfile(response.token);
-    console.log('User Profile:', profile); // Debug user profile
-    if (!profile) {
-      throw new Error('Failed to fetch user profile');
+// Async thunk for login
+export const loginUser = createAsyncThunk(
+  'auth/login',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await login(credentials);
+      // Note: token is now handled by cookies
+      const profile = await getUserProfile();
+      
+      if (!profile) {
+        throw new Error('Failed to fetch user profile');
+      }
+      
+      return {
+        user: {
+          ...response.user,
+          ...profile
+        }
+      };
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
-    return { token: response.token, user: profile, role: response.role }; 
-  } catch (error) {
-    return rejectWithValue(error.message);
   }
-});
+);
+
+// Async thunk for checking authentication status
+export const checkAuth = createAsyncThunk(
+  'auth/check',
+  async (_, { rejectWithValue }) => {
+    try {
+      const profile = await getUserProfile();
+      return { user: profile };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: { user: null, token: null, error: null, loading: false },
+  initialState: {
+    user: null,
+    isAuthenticated: false,
+    loading: false,
+    error: null
+  },
   reducers: {
     logout: (state) => {
       state.user = null;
-      state.token = null;
-      localStorage.removeItem('token');
+      state.isAuthenticated = false;
     },
+    clearError: (state) => {
+      state.error = null;
+    }
   },
   extraReducers: (builder) => {
     builder
+      // Login cases
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -38,15 +68,33 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.role = action.payload.role; // Store role in state
+        state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.isAuthenticated = false;
+      })
+      // Check auth cases
+      .addCase(checkAuth.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+      })
+      .addCase(checkAuth.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
+export const selectAuth = (state) => state.auth;
+export const selectUser = (state) => state.auth.user;
+export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
+
 export default authSlice.reducer;

@@ -4,6 +4,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const bodyParser = require('body-parser');
@@ -44,10 +45,30 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const logger = require('./utils/logger');
 
+// Enhanced CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? 'https://your-production-domain.com' : 'http://localhost:5173',
+  credentials: true, // Allow credentials (cookies)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'],
+}));
+
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cookieParser()); // Add cookie parsing
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  logger.debugWithContext('Incoming request', req, {
+    method: req.method,
+    path: req.path,
+    body: req.body,
+    query: req.query,
+  });
+  next();
+});
 
 // Global error-handling middleware
 app.use((err, req, res, next) => {
@@ -93,9 +114,15 @@ app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
 app.use('/api/auth', profileRoutes);
 app.use('/api/user', auth, changePasswordRoutes);
 
-// Test route for checking authentication and role middleware
-app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
-  res.json({ message: 'Welcome, admin!', user: req.user });
+// Add logout route
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/'
+  });
+  res.json({ message: 'Logged out successfully' });
 });
 
 // Check for required environment variables
@@ -119,6 +146,9 @@ mongoose.connect(MONGO_URI, {
 })
 .then(() => {
   logger.info('Successfully connected to MongoDB Atlas!');
+  app.listen(PORT, () => {
+    logger.info(`Server listening on port ${PORT}`);
+  });
 })
 .catch(err => {
   logger.error('MongoDB connection error', {
@@ -148,11 +178,6 @@ mongoose.connection.on('reconnected', () => {
 
 app.get('/', (req, res) => {
   res.send('Faculty Feedback System Backend is Running!');
-});
-
-// Start the server
-app.listen(PORT, () => {
-  logger.info(`Server listening on port ${PORT}`);
 });
 
 // Graceful shutdown handling
