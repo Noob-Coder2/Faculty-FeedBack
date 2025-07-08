@@ -15,7 +15,7 @@ router.get(
   validate,
   async (req, res) => {
     try {
-      const studentId = req.user.id;
+      const studentId = req.user._id;
 
       const studentProfile = await StudentProfile.findOne({ user: studentId });
       if (!studentProfile) {

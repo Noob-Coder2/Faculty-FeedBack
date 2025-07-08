@@ -51,8 +51,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // Global error-handling middleware
 app.use((err, req, res, next) => {
-  logger.errorWithContext('Unhandled error', req, err);
-  res.status(500).json({ message: 'Server error' });
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    logger.errorWithContext('JSON Parse Error', req, { error: err.message });
+    return res.status(400).json({ message: 'Invalid JSON payload' });
+  }
+
+  logger.errorWithContext('Unhandled server error', req, {
+    error: err.message,
+    stack: err.stack,
+    name: err.name
+  });
+
+  // Don't expose stack traces in production
+  const response = {
+    message: process.env.NODE_ENV === 'production' ? 
+      'An unexpected error occurred' : 
+      err.message || 'Server error'
+  };
+
+  res.status(err.status || 500).json(response);
 });
 
 // Log parsed body *after* express.json()
@@ -81,15 +98,6 @@ app.get('/api/test/admin', auth, checkRole(['admin']), (req, res) => {
   res.json({ message: 'Welcome, admin!', user: req.user });
 });
 
-app.use((err, req, res, next) => {
-  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    console.error('JSON Parse Error:', err.message);
-    return res.status(400).json({ message: 'Invalid JSON payload' });
-  }
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!' });
-});
-
 // Check for required environment variables
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET environment variable is not set.');
@@ -99,17 +107,44 @@ if (!process.env.JWT_SECRET) {
 // Check for MongoDB URI
 const MONGO_URI = process.env.MONGODB_URI;
 if (!MONGO_URI) {
-  console.error('FATAL ERROR: MONGODB_URI environment variable is not set.');
+  logger.error('FATAL ERROR: MONGODB_URI environment variable is not set.');
   process.exit(1);
 }
 
-// Connect to MongoDB Atlas
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('Successfully connected to MongoDB Atlas!'))
-  .catch(err => {
-    logger.error('MongoDB connection error', err);
-    process.exit(1);
+// Connect to MongoDB Atlas with improved error handling
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000 // Timeout after 5 seconds
+})
+.then(() => {
+  logger.info('Successfully connected to MongoDB Atlas!');
+})
+.catch(err => {
+  logger.error('MongoDB connection error', {
+    error: err.message,
+    stack: err.stack,
+    code: err.code
   });
+  process.exit(1);
+});
+
+// Monitor for MongoDB connection issues
+mongoose.connection.on('error', err => {
+  logger.error('MongoDB connection error:', {
+    error: err.message,
+    stack: err.stack,
+    code: err.code
+  });
+});
+
+mongoose.connection.on('disconnected', () => {
+  logger.warn('MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+  logger.info('MongoDB reconnected successfully');
+});
 
 app.get('/', (req, res) => {
   res.send('Faculty Feedback System Backend is Running!');
@@ -118,4 +153,28 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   logger.info(`Server listening on port ${PORT}`);
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received. Closing HTTP server...');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    mongoose.connection.close(false, () => {
+      logger.info('MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Promise Rejection:', { 
+    reason: reason instanceof Error ? reason.message : reason,
+    stack: reason instanceof Error ? reason.stack : undefined
+  });
 });
