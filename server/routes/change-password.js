@@ -22,13 +22,14 @@ router.put(
     async (req, res) => {
       try {
         const { currentPassword, newPassword } = req.body;
-        const user = await User.findById(req.user.id);
+        const user = await User.findOne({ userId: req.user.id });
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
         user.password = newPassword; // Will be hashed by pre-save middleware
         await user.save();
         res.status(200).json({ message: 'Password changed successfully' });
       } catch (error) {
+        console.error('Error changing password:', error);
         res.status(500).json({ message: 'Server error' });
       }
     }

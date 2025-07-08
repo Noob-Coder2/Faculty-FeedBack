@@ -436,7 +436,7 @@ router.delete(
 // GET /api/admin/pending-students
 router.get('/pending-students', async (req, res) => {
     try {
-        const pendingStudents = await StudentProfile.find({ pendingMapping: true })
+        const pendingStudents = await StudentProfile.find({ pendingMapping: false })
             .populate('user', 'userId email');
         res.status(200).json({ message: 'Pending students retrieved', students: pendingStudents });
     } catch (error) {
