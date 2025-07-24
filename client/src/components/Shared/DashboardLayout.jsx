@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Box, Autocomplete, TextField, IconButton, Tabs, Tab } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faComment, faLock, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import { useSelector } from 'react-redux';
+// import { useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 import { searchFaculty } from '../../services/api';
 
@@ -12,7 +12,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   const [options, setOptions] = useState([]);
   const [searchError, setSearchError] = useState('');
   const navigate = useNavigate();
-  const token = useSelector((state) => state.auth.token);
+  // const token = useSelector((state) => state.auth.token); // No longer needed
 
   // Debounced faculty search
   const debouncedSearch = debounce(async (query) => {
@@ -25,7 +25,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
       const results = await searchFaculty(query);
       setOptions(results);
       setSearchError('');
-    } catch (err) {
+    } catch {
       setSearchError('Failed to search faculty. Please try again.');
       setOptions([]);
     }
@@ -34,7 +34,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   useEffect(() => {
     debouncedSearch(searchQuery);
     return () => debouncedSearch.cancel(); // Cleanup debounce on unmount
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearch]);
 
   const handleSelect = (event, value) => {
     if (value) {
@@ -43,7 +43,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    // Optionally, call backend logout endpoint to clear cookie
     navigate('/');
   };
 

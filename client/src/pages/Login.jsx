@@ -27,7 +27,7 @@ function Login() {
       setServerError(null);
       const result = await dispatch(loginUser(data)).unwrap();
       const role = result.role; // Backend returns role
-      localStorage.setItem('userInfo', JSON.stringify({ role }));
+      // No need to store user info in localStorage; Redux handles state
       navigate(`/${role}-dashboard`);
     } catch (err) {
       setServerError(err.message || 'Failed to login');

@@ -1,11 +1,7 @@
-// src/services/apiUtils.js
-
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { store } from '../store/store';
-import { logout } from '../store/authSlice';
 
-export const createApiInstance = () => {
+export const createApiInstance = (onUnauthorized) => {
     // Axios instance with retry logic
     const api = axios.create({
         baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:5001/api',
@@ -23,22 +19,15 @@ export const createApiInstance = () => {
         },
     });
 
-    api.interceptors.request.use((config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    });
+    // No need to set Authorization header; cookies are sent automatically
+    api.interceptors.request.use((config) => config);
 
     api.interceptors.response.use(
         (response) => response,
         async (error) => {
-            if (error.response?.status === 401) {
-                // Clear redux state
-                store.dispatch(logout());
-                // Redirect to login
-                window.location.href = '/login';
+            if (error.response?.status === 401 && typeof onUnauthorized === 'function') {
+                // Execute the provided unauthorized handler
+                onUnauthorized();
             }
             return Promise.reject(error);
         }

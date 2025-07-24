@@ -20,27 +20,23 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/');
-      return;
-    }
+
 
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        const usersData = await getUsers(token, userPage);
+        const usersData = await getUsers(userPage);
         console.log('Users Data:', usersData);
         setUsers(Array.isArray(usersData.users) ? usersData.users : []);
         setTotalUserPages(usersData.pagination?.totalPages || 1);
 
-        const classesData = await getClasses(token, classPage);
+        const classesData = await getClasses(classPage);
         console.log('Classes Data:', classesData);
         setClasses(Array.isArray(classesData.classes) ? classesData.classes : []);
         setTotalClassPages(classesData.pagination?.totalPages || 1);
 
-        const assignmentsData = await getTeachingAssignments(token, assignmentPage);
+        const assignmentsData = await getTeachingAssignments(assignmentPage);
         console.log('Assignments Data:', assignmentsData);
         setAssignments(Array.isArray(assignmentsData.teachingAssignments) ? assignmentsData.teachingAssignments : []);
         setTotalAssignmentPages(assignmentsData.pagination?.totalPages || 1);
@@ -58,7 +54,7 @@ function AdminDashboard() {
   }, [navigate, userPage, classPage, assignmentPage]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    // Optionally, call backend logout endpoint to clear cookie
     navigate('/');
   };
 

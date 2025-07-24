@@ -31,18 +31,6 @@ export const setCachedResponse = (key, data) => {
     cache.set(key, { data, timestamp: Date.now() });
 };
 
-// Local storage for user profile
-export const getCachedProfile = () => {
-    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_TTL.profile) {
-            return data;
-        }
-    }
-    return null;
-};
-
-export const setCachedProfile = (data) => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-};
+// In-memory only for user profile (no localStorage)
+export const getCachedProfile = () => null;
+export const setCachedProfile = () => {};

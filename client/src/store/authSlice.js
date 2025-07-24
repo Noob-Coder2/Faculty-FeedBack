@@ -1,7 +1,8 @@
 // src/store/authSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { login, getUserProfile } from '../services/api';
+import { login } from '../services/api';
+import { getUserProfile } from '../services/api';
 
 // Async thunk for login
 export const loginUser = createAsyncThunk(
@@ -9,19 +10,10 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await login(credentials);
-      // Note: token is now handled by cookies
-      const profile = await getUserProfile();
-      
-      if (!profile) {
+      if (!response.user) {
         throw new Error('Failed to fetch user profile');
       }
-      
-      return {
-        user: {
-          ...response.user,
-          ...profile
-        }
-      };
+      return { user: response.user };
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -47,16 +39,16 @@ const authSlice = createSlice({
     user: null,
     isAuthenticated: false,
     loading: false,
-    error: null
+    error: null,
   },
   reducers: {
-    logout: (state) => {
+    logoutUser: (state) => {
       state.user = null;
       state.isAuthenticated = false;
     },
     clearError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -92,7 +84,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logoutUser, clearError } = authSlice.actions;
 export const selectAuth = (state) => state.auth;
 export const selectUser = (state) => state.auth.user;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;

@@ -1,46 +1,47 @@
 // src/components/FeedbackForm.jsx
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Rating, Button } from '@mui/material';
-import { getAssignments, submitFeedback } from '../services/api';
-import { useSelector } from 'react-redux';
+import { Box, Typography, Rating, Button, CircularProgress } from '@mui/material';
+import { useSelector, useDispatch } from 'react-redux';
+import { submitFeedbackThunk, fetchFeedbackData, clearFeedbackState } from '../store/feedbackSlice';
 
 function FeedbackForm() {
   const { assignmentId } = useParams();
-  const [assignment, setAssignment] = useState(null);
-  const [ratings, setRatings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
+  const { assignments, ratingParameters, loading, error, success } = useSelector((state) => state.feedback);
+  const [ratings, setRatings] = useState([]);
+  const [localError, setLocalError] = useState('');
 
   useEffect(() => {
-    const fetchAssignment = async () => {
-      try {
-        const data = await getAssignments(token);
-        const assign = data.teachingAssignments.find((a) => a._id === assignmentId);
-        setAssignment(assign);
-        setRatings(data.ratingParameters.map((param) => ({ ratingParameter: param.id, value: 0 })));
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAssignment();
-  }, [assignmentId, token]);
+    if (token) dispatch(fetchFeedbackData(token));
+    return () => { dispatch(clearFeedbackState()); };
+  }, [token, dispatch]);
 
-  const handleSubmit = async () => {
-    try {
-      await submitFeedback(token, { teachingAssignment: assignmentId, ratings });
-      navigate('/student-dashboard');
-    } catch (err) {
-      setError(err.message);
+  useEffect(() => {
+    if (ratingParameters.length > 0) {
+      setRatings(ratingParameters.map((param) => ({ ratingParameter: param.id, value: 0 })));
     }
+  }, [ratingParameters]);
+
+  const assignment = assignments.find((a) => a._id === assignmentId);
+
+  const handleSubmit = () => {
+    if (ratings.some((r) => r.value === 0)) {
+      setLocalError('Please provide all 5 ratings.');
+      return;
+    }
+    setLocalError('');
+    dispatch(submitFeedbackThunk({ token, payload: { teachingAssignment: assignmentId, ratings } }))
+      .then((res) => {
+        if (!res.error) setTimeout(() => navigate('/student-dashboard'), 1500);
+      });
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
+  if (loading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
+  if (!assignment) return <Typography color="error">Assignment not found.</Typography>;
 
   return (
     <Box>
@@ -49,7 +50,7 @@ function FeedbackForm() {
       <Box sx={{ mt: 2 }}>
         {ratings.map((rating, index) => (
           <Box key={rating.ratingParameter} sx={{ mb: 2 }}>
-            <Typography>{assignment.ratingParameters[index].questionText}</Typography>
+            <Typography>{ratingParameters[index]?.questionText || `Question ${index+1}`}</Typography>
             <Rating
               value={rating.value}
               onChange={(e, newValue) =>
@@ -61,9 +62,11 @@ function FeedbackForm() {
             />
           </Box>
         ))}
-        <Button variant="contained" onClick={handleSubmit} disabled={ratings.some((r) => r.value === 0)}>
-          Submit Feedback
+        <Button variant="contained" onClick={handleSubmit} disabled={loading || ratings.some((r) => r.value === 0)}>
+          {loading ? 'Submitting...' : 'Submit Feedback'}
         </Button>
+        {success && <Typography color="success.main" sx={{ mt: 2 }}>{success}</Typography>}
+        {(error || localError) && <Typography color="error" sx={{ mt: 2 }}>{error || localError}</Typography>}
       </Box>
     </Box>
   );
