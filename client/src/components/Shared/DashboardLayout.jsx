@@ -6,6 +6,7 @@ import { faUser, faComment, faLock, faSignOutAlt } from '@fortawesome/free-solid
 // import { useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 import { searchFaculty } from '../../services/api';
+import PropTypes from 'prop-types';
 
 function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +56,6 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Vertical Tabs */}
       <Tabs
         orientation="vertical"
         value={activeTab}

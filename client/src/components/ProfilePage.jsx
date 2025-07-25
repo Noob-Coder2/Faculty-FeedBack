@@ -1,6 +1,7 @@
 // src/components/ProfilePage.jsx
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Navigate } from 'react-router-dom';
 import { Box, Typography, Avatar, Button, TextField, CircularProgress } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
@@ -10,28 +11,28 @@ import { logoutUser } from '../store/authSlice';
 
 function ProfilePage() {
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token);
-  const { user, loading, error, success } = useSelector((state) => state.profile);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { loading, error, success } = useSelector((state) => state.profile);
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({ name: '', email: '' });
 
   useEffect(() => {
-    if (token) dispatch(fetchProfile(token));
+    if (isAuthenticated) {
+      dispatch(fetchProfile());
+    }
     return () => { dispatch(clearProfileState()); };
-  }, [token, dispatch]);
+  }, [isAuthenticated, dispatch]);
 
   useEffect(() => {
     if (user) setForm({ name: user.name, email: user.email });
   }, [user]);
 
-  // Prevent rendering if not authenticated (after hooks)
-  if (!token) {
-    window.location.href = '/login';
-    return null;
+  if (!isAuthenticated && !loading) {
+    return <Navigate to="/login" replace />;
   }
 
   const handleUpdate = () => {
-    dispatch(saveProfile({ token, form }));
+    dispatch(saveProfile({ form }));
     setEdit(false);
   };
 
@@ -69,7 +70,7 @@ function ProfilePage() {
                 </>
               )}
               <Button onClick={() => setEdit(true)} sx={{ mt: 1, mr: 1 }}>Edit</Button>
-              <Button color="error" onClick={() => { dispatch(logoutUser()); window.location.href = '/login'; }} sx={{ mt: 1 }}>Logout</Button>
+              <Button color="error" onClick={() => dispatch(logoutUser())} sx={{ mt: 1 }}>Logout</Button>
             </>
           )}
           {success && <Typography color="success.main">{success}</Typography>}

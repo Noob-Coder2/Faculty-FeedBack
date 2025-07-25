@@ -11,18 +11,26 @@ function RatingsPage() {
   const token = useSelector((state) => state.auth.token);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchRatings = async () => {
       try {
-        const data = await getFacultyRatings(token);
-        setRatings(data.ratings);
+        const data = await getFacultyRatings();
+        if (isMounted) {
+          setRatings(data.ratings);
+        }
       } catch (err) {
-        setError(err.message);
+        if (isMounted) {
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     fetchRatings();
-  }, [token]);
+    return () => { isMounted = false; };
+  }, []);
 
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Snackbar, Alert, CircularProgress, Box } from '@mui/material';
+import { ErrorBoundary } from 'react-error-boundary';
 
 import { checkAuth, selectAuth } from './store/authSlice';
 import Login from './pages/Login';
@@ -75,26 +76,44 @@ const GlobalErrorSnackbar = () => {
   );
 };
 
+const RouteErrorBoundary = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return <Navigate to="/error" />;
+  }
+
+  return (
+    <ErrorBoundary onError={() => setHasError(true)}>
+      {children}
+    </ErrorBoundary>
+  );
+};
+
 const App = () => {
   const [error, setError] = useState(null);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const dispatch = useDispatch();
   const { isAuthenticated, loading, error: authError } = useSelector(selectAuth);
   const { error: feedbackError } = useSelector(state => state.feedback);
   const { error: profileError } = useSelector(state => state.profile);
+  const location = window.location.pathname;
+  const isPublicRoute = ['/login', '/register'].includes(location);
 
   useEffect(() => {
     let isMounted = true;
-    if (!isAuthenticated && !loading) {
+    
+    if (!isPublicRoute && !isAuthenticated && !loading) {
       dispatch(checkAuth()).catch(() => {
         if (isMounted) {
-          setError('Failed to verify authentication status');
+          setShouldRedirect(true);
         }
       });
     }
     return () => {
       isMounted = false;
     };
-  }, [dispatch, isAuthenticated, loading]);
+  }, [dispatch, isAuthenticated, loading, isPublicRoute]);
 
   useEffect(() => {
     // Combine errors from Redux slices
@@ -106,6 +125,11 @@ const App = () => {
       setError(profileError);
     }
   }, [authError, feedbackError, profileError]);
+
+  // Handle auth redirect
+  if (shouldRedirect && !isPublicRoute) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <ErrorContext.Provider value={{ error, setError }}>
@@ -157,9 +181,11 @@ const App = () => {
         <Route
           path="/student-dashboard"
           element={
-            <ProtectedRoute roles={['student']}>
-              <StudentDashboard />
-            </ProtectedRoute>
+            <RouteErrorBoundary>
+              <ProtectedRoute roles={['student']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            </RouteErrorBoundary>
           }
         />
         <Route path="/" element={<HomeRedirect />} />

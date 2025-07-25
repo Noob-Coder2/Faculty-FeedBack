@@ -67,8 +67,17 @@ function Register() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Add validation before submission
   const onSubmit = async (data) => {
     try {
+      if (!data.role) {
+        throw new Error('Role selection is required');
+      }
+
+      if (data.role === 'student' && !data.branch) {
+        throw new Error('Branch is required for students');
+      }
+
       // Convert empty strings to undefined for optional fields
       const cleanedData = Object.fromEntries(
         Object.entries(data).map(([key, value]) => [key, value === '' ? undefined : value])

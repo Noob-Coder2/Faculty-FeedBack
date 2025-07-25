@@ -29,15 +29,26 @@ export const login = async (data) => {
   }
 };
 
+const sanitizeInput = (input) => {
+  if (typeof input === 'string') {
+    return input.trim().replace(/[<>]/g, '');
+  }
+  return input;
+};
+
 export const register = async (data) => {
-  if (!data.userId || !data.name || !data.email || !data.password || !data.role) {
+  const sanitizedData = Object.entries(data).reduce((acc, [key, value]) => ({
+    ...acc,
+    [key]: sanitizeInput(value)
+  }), {});
+  if (!sanitizedData.userId || !sanitizedData.name || !sanitizedData.email || !sanitizedData.password || !sanitizedData.role) {
     throw { error: true, message: 'All required fields (userId, name, email, password, role) must be provided' };
   }
-  if (!['student', 'faculty'].includes(data.role)) {
+  if (!['student', 'faculty'].includes(sanitizedData.role)) {
     throw { error: true, message: 'Role must be either student or faculty' };
   }
   try {
-    const response = await api.post('/auth/register', data);
+    const response = await api.post('/auth/register', sanitizedData);
     return response.data;
   } catch (error) {
     throw handleError(error);
