@@ -16,9 +16,10 @@ const Class = require('../models/Class');
 router.post(
     '/users',
     [
-        // Validations with sanitization
+        // Validations without escape. Sanitization is handled by express-mongo-sanitize globally.
+        // Proper XSS prevention is best handled by encoding output on the frontend.
         body('userId').trim().notEmpty().withMessage('User ID is required'),
-        body('name').trim().escape().notEmpty().withMessage('Name is required'),
+        body('name').trim().notEmpty().withMessage('Name is required'),
         body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
         body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
         body('role').isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
@@ -27,22 +28,18 @@ router.post(
             .if(body('role').equals('student'))
             .trim()
             .notEmpty()
-            .escape()
             .withMessage('Branch is required for students')
             .isIn(['CSE', 'ECE', 'ME', 'CE', 'EE', 'CSE AIML', 'CSE DS'])
             .withMessage('Branch must be one of: CSE, ECE, ME, CE, EE, CSE AIML, CSE DS'),
         body('semester')
             .if(body('role').equals('student'))
-            .trim()
-            .escape()
             .notEmpty()
             .withMessage('Semester is required for students')
-            .isIn([1, 2, 3, 4, 5, 6, 7, 8])
+            .isInt({ min: 1, max: 8 })
             .withMessage('Semester must be between 1 and 8'),
         body('section')
             .if(body('role').equals('student'))
             .trim()
-            .escape()
             .notEmpty()
             .withMessage('Section is required for students')
             .isIn(['A', 'B', 'C'])
@@ -50,15 +47,12 @@ router.post(
         body('academicYear')
             .if(body('role').equals('student'))
             .trim()
-            .escape()
             .notEmpty()
             .withMessage('Academic year is required for students')
             .matches(/^\d{4}-\d{4}$/)
             .withMessage('Academic year must be in the format YYYY-YYYY (e.g., 2024-2025)'),
         body('admissionYear')
             .if(body('role').equals('student'))
-            .trim()
-            .escape()
             .notEmpty()
             .withMessage('Admission year is required for students')
             .isInt({ min: 2000, max: new Date().getFullYear() })
@@ -76,41 +70,21 @@ router.post(
         body('department')
             .if(body('role').equals('faculty'))
             .trim()
-            .escape()
             .notEmpty()
             .withMessage('Department is required for faculty'),
-        body('subjects')
-            .if(body('role').equals('faculty'))
-            .optional()
-            .isArray()
-            .withMessage('Subjects must be an array')
-            .custom(async (subjects) => {
-                if (subjects.length === 0) return true; // Allow empty array
-                const validSubjects = await Subject.find({ _id: { $in: subjects } });
-                if (validSubjects.length !== subjects.length) {
-                    throw new Error('One or more subject IDs are invalid');
-                }
-                return true;
-            }),
-        body('subjects.*').isMongoId().withMessage('Each subject must be a valid MongoDB ID'),
         body('designation')
             .if(body('role').equals('faculty'))
             .notEmpty()
             .trim()
-            .escape()
             .withMessage('Designation is required for faculty'),
         body('joiningYear')
             .if(body('role').equals('faculty'))
             .notEmpty()
-            .trim()
-            .escape()
             .withMessage('Joining year is required for faculty')
             .isInt({ min: 1900, max: new Date().getFullYear() })
             .withMessage('Joining year must be between 1900 and the current year'),
         body('qualifications')
             .if(body('role').equals('faculty'))
-            .trim()
-            .escape()
             .optional()
             .isArray()
             .withMessage('Qualifications must be an array'),
@@ -118,6 +92,13 @@ router.post(
     validate,
     async (req, res) => {
         logger.debugWithContext('Received request to create user', req, { userId: req.body.userId, role: req.body.role });
+        
+        // SECURITY: Explicitly block admin creation via this endpoint.
+        if (req.body.role === 'admin') {
+            logger.warnWithContext('Attempted to create admin via API', req, { userId: req.body.userId });
+            return res.status(403).json({ message: 'Admin creation is not permitted through this API.' });
+        }
+
         try {
             const {
                 userId, name, email, password, role, branch, semester, section, academicYear, admissionYear,
@@ -137,10 +118,9 @@ router.post(
 
             // Create role-specific profile
             if (role === 'student') {
-                // Look up the class based on branch, semester, section, and academicYear
                 const classDoc = await Class.findOne({
                     branch,
-                    semester: semester.toString(), // Ensure type matches schema (string in seed)
+                    semester: semester.toString(),
                     section,
                     academicYear,
                 });
@@ -154,7 +134,7 @@ router.post(
                     section,
                     admissionYear,
                     subjects: subjects || [],
-                    pendingMapping: !classId, // Set to true if no matching class found
+                    pendingMapping: !classId,
                 });
             } else if (role === 'faculty') {
                 await FacultyProfile.create({
@@ -167,14 +147,14 @@ router.post(
                 });
             }
 
-            logger.infoWithContext('User created successfully', req, { userId, role, userMongoId: savedUser._id }); // Log success
+            logger.infoWithContext('User created successfully', req, { userId, role, userMongoId: savedUser._id });
             res.status(201).json({
                 message: 'User created successfully!',
                 user: { id: savedUser._id, userId, name, email, role },
             });
         } catch (error) {
             logger.errorWithContext('User creation error', req, error);
-            if (error.code === 11000) { // Duplicate key error (MongoDB)
+            if (error.code === 11000) {
                 return res.status(400).json({ message: 'User ID or Email already exists' });
             }
             res.status(500).json({ message: 'Server error during user creation' });
@@ -256,13 +236,13 @@ router.put(
     '/users/:id',
     [
         param('id').isMongoId().withMessage('Invalid user ID'),
-        body('name').optional().trim().escape().notEmpty().withMessage('Name cannot be empty'),
+        body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
         body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
         body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-        body('role').optional().trim().escape().isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
-        body('isActive').optional().trim().escape().isBoolean().withMessage('isActive must be a boolean'),
+        body('role').optional().trim().isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
+        body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
         // Student-specific fields with corrected conditional validation
-        body('classId')  // Changed from 'class' to 'classId'
+        body('classId')
             .optional()
             .if((value, { req }) => req.body.role === 'student' || req.userRole === 'student')
             .isMongoId()
@@ -275,7 +255,7 @@ router.put(
         body('semester')
             .optional()
             .if((value, { req }) => req.body.role === 'student' || req.userRole === 'student')
-            .isIn([1, 2, 3, 4, 5, 6, 7, 8])
+            .isInt({ min: 1, max: 8 })
             .withMessage('Semester must be between 1 and 8'),
         body('section')
             .optional()
@@ -314,17 +294,8 @@ router.put(
             .withMessage('Qualifications must be an array'),
         body('subjects')
             .optional()
-            .if((value, { req }) => req.body.role === 'faculty' || req.userRole === 'faculty')
             .isArray()
-            .withMessage('Subjects must be an array')
-            .custom(async (subjects) => {
-                if (subjects.length === 0) return true;
-                const validSubjects = await Subject.find({ _id: { $in: subjects } });
-                if (validSubjects.length !== subjects.length) {
-                    throw new Error('One or more subject IDs are invalid');
-                }
-                return true;
-            }),
+            .withMessage('Subjects must be an array'),
         body('subjects.*').optional().isMongoId().withMessage('Each subject must be a valid MongoDB ID'),
     ],
     validate,
@@ -335,20 +306,19 @@ router.put(
                 department, designation, joiningYear, qualifications, subjects,
             } = req.body;
 
-            
             const user = await User.findById(req.params.id);
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
             }
 
             // Store the current role for validation purposes
-            req.userRole = user.role; // Pass the current role to the validator
+            req.userRole = user.role;
 
             // Update User fields if provided
             const userUpdates = {};
             if (name) userUpdates.name = name;
             if (email) userUpdates.email = email;
-            if (password) userUpdates.password = password; // Note: Password hashing handled by User schema pre-save
+            if (password) userUpdates.password = password;
             if (role) userUpdates.role = role;
             if (typeof isActive === 'boolean') userUpdates.isActive = isActive;
 
@@ -360,48 +330,34 @@ router.put(
             // Handle profile updates based on role
             let profile = null;
 
-            // Student profile updates
-            if (user.role === 'student' && (classId || branch || semester || section || admissionYear || status)) {
-                profile = await StudentProfile.findOne({ user: user._id });
-                if (!profile) {
-                    return res.status(400).json({ message: 'Student profile not found for this user' });
-                }
-
-                const studentUpdates = {};
-                if (classId) studentUpdates.classId = classId;  // Changed from 'class' to 'classId'
-                if (branch) studentUpdates.branch = branch;
-                if (semester) studentUpdates.semester = semester;
-                if (section) studentUpdates.section = section;
-                if (admissionYear) studentUpdates.admissionYear = admissionYear;
-                if (status) studentUpdates.status = status;
-
-                Object.assign(profile, studentUpdates);
-                await profile.save();
-            }
-
-            // Faculty profile updates
-            if (user.role === 'faculty' && (department || designation || joiningYear || qualifications || subjects)) {
-                profile = await FacultyProfile.findOne({ user: user._id });
-                if (!profile) {
-                    return res.status(400).json({ message: 'Faculty profile not found for this user' });
-                }
-
-                const facultyUpdates = {};
-                if (department) facultyUpdates.department = department;
-                if (designation) facultyUpdates.designation = designation;
-                if (joiningYear) facultyUpdates.joiningYear = joiningYear;
-                if (qualifications) facultyUpdates.qualifications = qualifications;
-                if (subjects) facultyUpdates.subjects = subjects; // Array of subject IDs
-
-                Object.assign(profile, facultyUpdates);
-                await profile.save();
-            }
-
-            // Fetch updated profile for response
             if (user.role === 'student') {
                 profile = await StudentProfile.findOne({ user: user._id });
+                if (profile) {
+                    const studentUpdates = {};
+                    if (classId) studentUpdates.classId = classId;
+                    if (branch) studentUpdates.branch = branch;
+                    if (semester) studentUpdates.semester = semester;
+                    if (section) studentUpdates.section = section;
+                    if (admissionYear) studentUpdates.admissionYear = admissionYear;
+                    if (status) studentUpdates.status = status;
+                    if (subjects) studentUpdates.subjects = subjects;
+
+                    Object.assign(profile, studentUpdates);
+                    await profile.save();
+                }
             } else if (user.role === 'faculty') {
                 profile = await FacultyProfile.findOne({ user: user._id });
+                if (profile) {
+                    const facultyUpdates = {};
+                    if (department) facultyUpdates.department = department;
+                    if (designation) facultyUpdates.designation = designation;
+                    if (joiningYear) facultyUpdates.joiningYear = joiningYear;
+                    if (qualifications) facultyUpdates.qualifications = qualifications;
+                    if (subjects) facultyUpdates.subjects = subjects;
+
+                    Object.assign(profile, facultyUpdates);
+                    await profile.save();
+                }
             }
 
             res.status(200).json({
@@ -448,7 +404,7 @@ router.delete(
 router.get('/pending-students', async (req, res) => {
     try {
         const pendingStudents = await StudentProfile.find({ pendingMapping: true })
-            .populate('user', 'userId name email');
+            .populate('user', 'userId email');
         res.status(200).json({ message: 'Pending students retrieved', students: pendingStudents });
     } catch (error) {
         console.error('Get Pending Students Error:', error);
