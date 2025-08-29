@@ -17,6 +17,16 @@ export const login = async (data) => {
   }
 };
 
+export const logout = async () => {
+  try {
+    const response = await api.post('/auth/logout');
+    return response.data;
+  } catch (error) {
+    console.error('Logout API call failed, but proceeding with client-side logout.', error);
+    // We don't throw here because client-side logout should proceed regardless
+  }
+};
+
 const sanitizeInput = (input) => {
   if (typeof input === 'string') {
     return input.trim().replace(/[<>]/g, '');

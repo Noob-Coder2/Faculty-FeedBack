@@ -1,16 +1,18 @@
 // src/components/ProfilePage.jsx
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Box, Typography, Avatar, Button, TextField, CircularProgress } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { fetchProfile, saveProfile, clearProfileState } from '../store/profileSlice';
 import { logoutUser } from '../store/authSlice';
+import { logout } from '../services/api';
 
 
 function ProfilePage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { loading, error, success } = useSelector((state) => state.profile);
   const [edit, setEdit] = useState(false);
@@ -26,6 +28,12 @@ function ProfilePage() {
   useEffect(() => {
     if (user) setForm({ name: user.name, email: user.email });
   }, [user]);
+
+  const handleLogout = async () => {
+    await logout();
+    dispatch(logoutUser());
+    navigate('/login');
+  };
 
   if (!isAuthenticated && !loading) {
     return <Navigate to="/login" replace />;
@@ -70,7 +78,7 @@ function ProfilePage() {
                 </>
               )}
               <Button onClick={() => setEdit(true)} sx={{ mt: 1, mr: 1 }}>Edit</Button>
-              <Button color="error" onClick={() => dispatch(logoutUser())} sx={{ mt: 1 }}>Logout</Button>
+              <Button color="error" onClick={handleLogout} sx={{ mt: 1 }}>Logout</Button>
             </>
           )}
           {success && <Typography color="success.main">{success}</Typography>}

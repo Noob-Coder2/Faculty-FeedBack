@@ -21,7 +21,13 @@ const auth = (req, res, next) => {
         next();
     } catch (error) {
         logger.errorWithContext('Authentication failed: Invalid token', req, error);
-        res.clearCookie('auth_token');
+        // Clear the invalid cookie from the browser
+        res.clearCookie('auth_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
         res.status(401).json({ message: 'Session expired. Please login again.' });
     }
 };
