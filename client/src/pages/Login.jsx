@@ -26,7 +26,7 @@ function Login() {
       console.log('Login Payload:', data); // Debug payload
       setServerError(null);
       const result = await dispatch(loginUser(data)).unwrap();
-      const role = result.role; // Backend returns role
+      const role = result.user.role; // Backend returns role
       // No need to store user info in localStorage; Redux handles state
       navigate(`/${role}-dashboard`);
     } catch (err) {

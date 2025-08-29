@@ -2,14 +2,12 @@
 import { useState } from 'react';
 import { Box, Typography, TextField, Button, CircularProgress } from '@mui/material';
 import { changePassword } from '../../services/api';
-import { useSelector } from 'react-redux';
 
 function ChangePasswordPage() {
   const [formData, setFormData] = useState({ currentPassword: '', newPassword: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const token = useSelector((state) => state.auth.token);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +15,7 @@ function ChangePasswordPage() {
     setError('');
     setSuccess('');
     try {
-      await changePassword(token, formData);
+      await changePassword(formData);
       setFormData({ currentPassword: '', newPassword: '' });
       setSuccess('Password changed successfully');
     } catch (err) {

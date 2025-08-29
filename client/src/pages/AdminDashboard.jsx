@@ -1,9 +1,29 @@
 //src/pages/AdminDashboard.jsx
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import {
+  Box, Container, Typography, Tabs, Tab, Paper, Table, TableContainer,
+  TableHead, TableBody, TableRow, TableCell, Pagination, CircularProgress,
+  Alert, Button
+} from '@mui/material';
 import { getUsers, getClasses, getTeachingAssignments } from '../services/api';
-import '../styles/AdminDashboard.css'; // Import the CSS
+import { logoutUser } from '../store/authSlice';
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`admin-tabpanel-${index}`}
+      aria-labelledby={`admin-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -17,210 +37,189 @@ function AdminDashboard() {
   const [totalUserPages, setTotalUserPages] = useState(1);
   const [totalClassPages, setTotalClassPages] = useState(1);
   const [totalAssignmentPages, setTotalAssignmentPages] = useState(1);
+  const [tabIndex, setTabIndex] = useState(0);
+
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-
-
     const fetchData = async () => {
       try {
         setLoading(true);
 
         const usersData = await getUsers(userPage);
-        console.log('Users Data:', usersData);
         setUsers(Array.isArray(usersData.users) ? usersData.users : []);
         setTotalUserPages(usersData.pagination?.totalPages || 1);
 
         const classesData = await getClasses(classPage);
-        console.log('Classes Data:', classesData);
         setClasses(Array.isArray(classesData.classes) ? classesData.classes : []);
         setTotalClassPages(classesData.pagination?.totalPages || 1);
 
         const assignmentsData = await getTeachingAssignments(assignmentPage);
-        console.log('Assignments Data:', assignmentsData);
         setAssignments(Array.isArray(assignmentsData.teachingAssignments) ? assignmentsData.teachingAssignments : []);
         setTotalAssignmentPages(assignmentsData.pagination?.totalPages || 1);
+
       } catch (err) {
         setError(err.message || 'An error occurred while fetching data');
-        setUsers([]);
-        setClasses([]);
-        setAssignments([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [navigate, userPage, classPage, assignmentPage]);
+  }, [userPage, classPage, assignmentPage]);
 
   const handleLogout = () => {
-    // Optionally, call backend logout endpoint to clear cookie
-    navigate('/');
+    dispatch(logoutUser());
+    navigate('/login');
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
   };
 
   const handlePageChange = (type, newPage) => {
-    if (type === 'users' && newPage >= 1 && newPage <= totalUserPages) {
-      setUserPage(newPage);
-    } else if (type === 'classes' && newPage >= 1 && newPage <= totalClassPages) {
-      setClassPage(newPage);
-    } else if (type === 'assignments' && newPage >= 1 && newPage <= totalAssignmentPages) {
-      setAssignmentPage(newPage);
-    }
+    if (type === 'users') setUserPage(newPage);
+    if (type === 'classes') setClassPage(newPage);
+    if (type === 'assignments') setAssignmentPage(newPage);
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div className="container">
-      <div className="header">
-        <h1>Admin Dashboard</h1>
-        <button onClick={handleLogout} className="logout-btn">
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" component="h1">
+          Admin Dashboard
+        </Typography>
+        <Button variant="contained" color="error" onClick={handleLogout}>
           Logout
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      {error && <p className="error">{error}</p>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {/* Users Section */}
-      <div className="section">
-        <h2>Users</h2>
-        {users.length === 0 ? (
-          <p className="no-data">No users found</p>
-        ) : (
-          <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                </tr>
-              </thead>
-              <tbody>
+      <Paper sx={{ width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={tabIndex} onChange={handleTabChange} aria-label="admin dashboard tabs">
+            <Tab label="Users" id="admin-tab-0" />
+            <Tab label="Classes" id="admin-tab-1" />
+            <Tab label="Teaching Assignments" id="admin-tab-2" />
+          </Tabs>
+        </Box>
+
+        {/* Users Panel */}
+        <TabPanel value={tabIndex} index={0}>
+          <Typography variant="h6" gutterBottom>Manage Users</Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>User ID</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {users.map(user => (
-                  <tr key={user._id}>
-                    <td>{user.userId}</td>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                  </tr>
+                  <TableRow key={user._id}>
+                    <TableCell>{user.userId}</TableCell>
+                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-            <div className="pagination">
-              <button
-                onClick={() => handlePageChange('users', userPage - 1)}
-                disabled={userPage === 1}
-              >
-                Previous
-              </button>
-              <span>Page {userPage} of {totalUserPages}</span>
-              <button
-                onClick={() => handlePageChange('users', userPage + 1)}
-                disabled={userPage === totalUserPages}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={totalUserPages}
+              page={userPage}
+              onChange={(e, value) => handlePageChange('users', value)}
+              color="primary"
+            />
+          </Box>
+        </TabPanel>
 
-      {/* Classes Section */}
-      <div className="section">
-        <h2>Classes</h2>
-        {classes.length === 0 ? (
-          <p className="no-data">No classes found</p>
-        ) : (
-          <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Branch</th>
-                  <th>Semester</th>
-                  <th>Section</th>
-                </tr>
-              </thead>
-              <tbody>
+        {/* Classes Panel */}
+        <TabPanel value={tabIndex} index={1}>
+          <Typography variant="h6" gutterBottom>Manage Classes</Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Branch</TableCell>
+                  <TableCell>Semester</TableCell>
+                  <TableCell>Section</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {classes.map(cls => (
-                  <tr key={cls._id}>
-                    <td>{cls.name}</td>
-                    <td>{cls.branch}</td>
-                    <td>{cls.semester}</td>
-                    <td>{cls.section}</td>
-                  </tr>
+                  <TableRow key={cls._id}>
+                    <TableCell>{cls.name}</TableCell>
+                    <TableCell>{cls.branch}</TableCell>
+                    <TableCell>{cls.semester}</TableCell>
+                    <TableCell>{cls.section}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-            <div className="pagination">
-              <button
-                onClick={() => handlePageChange('classes', classPage - 1)}
-                disabled={classPage === 1}
-              >
-                Previous
-              </button>
-              <span>Page {classPage} of {totalClassPages}</span>
-              <button
-                onClick={() => handlePageChange('classes', classPage + 1)}
-                disabled={classPage === totalClassPages}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={totalClassPages}
+              page={classPage}
+              onChange={(e, value) => handlePageChange('classes', value)}
+              color="primary"
+            />
+          </Box>
+        </TabPanel>
 
-      {/* Teaching Assignments Section */}
-      <div className="section">
-        <h2>Teaching Assignments</h2>
-        {assignments.length === 0 ? (
-          <p className="no-data">No assignments found</p>
-        ) : (
-          <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Faculty</th>
-                  <th>Subject</th>
-                  <th>Class</th>
-                  <th>Feedback Period</th>
-                </tr>
-              </thead>
-              <tbody>
+        {/* Assignments Panel */}
+        <TabPanel value={tabIndex} index={2}>
+          <Typography variant="h6" gutterBottom>Manage Teaching Assignments</Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Faculty</TableCell>
+                  <TableCell>Subject</TableCell>
+                  <TableCell>Class</TableCell>
+                  <TableCell>Feedback Period</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {assignments.map(assignment => (
-                  <tr key={assignment._id}>
-                    <td>{assignment.faculty.name}</td>
-                    <td>{assignment.subject.subjectName}</td>
-                    <td>{assignment.class.name}</td>
-                    <td>{assignment.feedbackPeriod.name}</td>
-                  </tr>
+                  <TableRow key={assignment._id}>
+                    <TableCell>{assignment.faculty.name}</TableCell>
+                    <TableCell>{assignment.subject.subjectName}</TableCell>
+                    <TableCell>{assignment.class.name}</TableCell>
+                    <TableCell>{assignment.feedbackPeriod.name}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-            <div className="pagination">
-              <button
-                onClick={() => handlePageChange('assignments', assignmentPage - 1)}
-                disabled={assignmentPage === 1}
-              >
-                Previous
-              </button>
-              <span>Page {assignmentPage} of {totalAssignmentPages}</span>
-              <button
-                onClick={() => handlePageChange('assignments', assignmentPage + 1)}
-                disabled={assignmentPage === totalAssignmentPages}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={totalAssignmentPages}
+              page={assignmentPage}
+              onChange={(e, value) => handlePageChange('assignments', value)}
+              color="primary"
+            />
+          </Box>
+        </TabPanel>
+      </Paper>
+    </Container>
   );
 }
 

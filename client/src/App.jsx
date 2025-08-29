@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 import { checkAuth, selectAuth } from './store/authSlice';
 import Login from './pages/Login';
-import FacultyRatings from './pages/FacultyDashboard';
+import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Register from './pages/Register';
@@ -56,7 +56,7 @@ const HomeRedirect = () => {
     case 'student':
       return <Navigate to="/student-dashboard" />;
     case 'faculty':
-      return <Navigate to={`/faculty-ratings/${user.id}`} />;
+      return <Navigate to="/faculty-dashboard" />;
     default:
       return <Navigate to="/login" />;
   }
@@ -144,10 +144,10 @@ const App = () => {
           }
         />
         <Route
-          path="/faculty-ratings/:facultyId"
+          path="/faculty-dashboard"
           element={
-            <ProtectedRoute roles={['faculty', 'admin']}>
-              <FacultyRatings />
+            <ProtectedRoute roles={['faculty']}>
+              <FacultyDashboard />
             </ProtectedRoute>
           }
         />

@@ -51,7 +51,7 @@ export const changePassword = async (data) => {
     throw { error: true, message: 'New password must be at least 6 characters long' };
   }
   try {
-    const response = await api.put('/auth/change-password', data);
+    const response = await api.put('/user/change-password', data);
     return response.data;
   } catch (error) {
     throw handleError(error);

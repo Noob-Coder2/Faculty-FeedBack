@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Box, Autocomplete, TextField, IconButton, Tabs, Tab } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faComment, faLock, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-// import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import debounce from 'lodash/debounce';
 import { searchFaculty } from '../../services/api';
+import { logoutUser } from '../../store/authSlice';
 import PropTypes from 'prop-types';
 
 function DashboardLayout({ role, children, activeTab, setActiveTab }) {
@@ -13,7 +14,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   const [options, setOptions] = useState([]);
   const [searchError, setSearchError] = useState('');
   const navigate = useNavigate();
-  // const token = useSelector((state) => state.auth.token); // No longer needed
+  const dispatch = useDispatch();
 
   // Debounced faculty search
   const debouncedSearch = debounce(async (query) => {
@@ -44,13 +45,16 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   };
 
   const handleLogout = () => {
-    // Optionally, call backend logout endpoint to clear cookie
-    navigate('/');
+    dispatch(logoutUser());
+    // The backend logout endpoint to clear the cookie will be called automatically by the auth interceptor if it's set up,
+    // otherwise, the client-side state is cleared and the user is redirected.
+    navigate('/login');
   };
 
   const tabs = [
     { label: 'Profile', icon: faUser, value: 'profile' },
     role === 'student' && { label: 'Feedback', icon: faComment, value: 'feedback' },
+    role === 'faculty' && { label: 'My Ratings', icon: faComment, value: 'ratings' },
     { label: 'Change Password', icon: faLock, value: 'password' },
   ].filter(Boolean);
 
@@ -113,5 +117,12 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
     </Box>
   );
 }
+
+DashboardLayout.propTypes = {
+    role: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
+    activeTab: PropTypes.string.isRequired,
+    setActiveTab: PropTypes.func.isRequired,
+};
 
 export default DashboardLayout;

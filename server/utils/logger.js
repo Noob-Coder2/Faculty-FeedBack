@@ -51,6 +51,10 @@ logger.errorWithContext = (message, req, error) => {
   logger.error(message, { ...addRequestContext(req), error: error?.message, stack: error?.stack });
 };
 
+logger.warnWithContext = (message, req, meta = {}) => {
+  logger.warn(message, { ...addRequestContext(req), ...meta });
+};
+
 logger.infoWithContext = (message, req, meta = {}) => {
   logger.info(message, { ...addRequestContext(req), ...meta });
 };

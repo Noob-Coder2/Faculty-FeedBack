@@ -5,10 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const mongoSanitize = require('express-mongo-sanitize');
 require('dotenv').config();
-
-const bodyParser = require('body-parser');
 
 // import routes
 const registerRoutes = require('./routes/register');
@@ -59,17 +56,31 @@ app.use(cors({
 app.use(cookieParser()); // Add cookie parsing
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(mongoSanitize()); // Prevent NoSQL injection
+// app.use(mongoSanitize()); // Prevent NoSQL injection - REMOVED due to incompatibility with Express v5
 
-// Request logging middleware
-app.use((req, res, next) => {
-  logger.debugWithContext('Incoming request', req, {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    query: req.query,
+// Routes
+app.use('/api/auth/register', registerRoutes);
+app.use('/api/auth/login', loginLimiter, loginRoutes);
+app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
+app.use('/api/admin/classes', auth, checkRole(['admin']), classRoutes);
+app.use('/api/admin/subjects', auth, checkRole(['admin']), subjectRoutes);
+app.use('/api/admin/feedback-periods', auth, checkRole(['admin']), feedbackPeriodRoutes);
+app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingAssignmentRoutes);
+app.use('/api/student', auth, checkRole(['student']), studentRoutes);
+app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
+app.use('/api/admin/faculty-ratings', auth, checkRole(['admin']), facultyRatingsRoutes);
+app.use('/api/auth', profileRoutes);
+app.use('/api/user', auth, changePasswordRoutes);
+
+// Add logout route
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/'
   });
-  next();
+  res.json({ message: 'Logged out successfully' });
 });
 
 // Global error-handling middleware
@@ -87,44 +98,12 @@ app.use((err, req, res, next) => {
 
   // Don't expose stack traces in production
   const response = {
-    message: process.env.NODE_ENV === 'production' ? 
-      'An unexpected error occurred' : 
+    message: process.env.NODE_ENV === 'production' ?
+      'An unexpected error occurred' :
       err.message || 'Server error'
   };
 
   res.status(err.status || 500).json(response);
-});
-
-// Log parsed body *after* express.json()
-app.use((req, res, next) => {
-  console.log('Request Headers:', req.headers);
-  console.log('Raw Request Body:', req.body ? JSON.stringify(req.body) : 'Empty');
-  next();
-});
-
-// Routes
-app.use('/api/auth/register', registerRoutes);
-app.use('/api/auth/login', loginLimiter, loginRoutes);
-app.use('/api/admin', auth, checkRole(['admin']), adminRoutes);
-app.use('/api/admin/classes', auth, checkRole(['admin']), classRoutes);
-app.use('/api/admin/subjects', auth, checkRole(['admin']), subjectRoutes);
-app.use('/api/admin/feedback-periods', auth, checkRole(['admin']), feedbackPeriodRoutes);
-app.use('/api/admin/teaching-assignments', auth, checkRole(['admin']), teachingAssignmentRoutes);
-app.use('/api/student', auth, checkRole(['student']), studentRoutes);
-app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
-app.use('/api/admin/faculty-ratings', facultyRatingsRoutes);
-app.use('/api/auth', profileRoutes);
-app.use('/api/user', auth, changePasswordRoutes);
-
-// Add logout route
-app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('auth_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/'
-  });
-  res.json({ message: 'Logged out successfully' });
 });
 
 // Check for required environment variables
@@ -200,7 +179,7 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection:', { 
+  logger.error('Unhandled Promise Rejection:', {
     reason: reason instanceof Error ? reason.message : reason,
     stack: reason instanceof Error ? reason.stack : undefined
   });

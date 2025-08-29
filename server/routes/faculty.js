@@ -10,6 +10,7 @@ const Class = require("../models/Class");
 const RatingParameter = require("../models/RatingParameter");
 const validate = require("../middleware/validate");
 const auth = require("../middleware/auth");
+const User = require("../models/User"); // Import User model
 
 // GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
 router.get(
@@ -23,7 +24,15 @@ router.get(
   validate,
   async (req, res) => {
     try {
-      const facultyId = req.user.id; // From JWT auth middleware
+      const facultyUserId = req.user.id; // From JWT auth middleware (e.g., "FAC001")
+
+      // Find the user document to get the MongoDB ObjectId
+      const facultyUser = await User.findOne({ userId: facultyUserId });
+      if (!facultyUser) {
+        return res.status(404).json({ message: "Faculty user not found" });
+      }
+      const facultyId = facultyUser._id; // The ObjectId needed for referencing in other collections
+
       const { feedbackPeriod } = req.query;
 
       // Default to the current active feedback period if none specified
@@ -41,7 +50,7 @@ router.get(
         return res.status(404).json({ message: "No feedback period found" });
       }
 
-      // Find all teaching assignments for this faculty in the target period
+      // Find all teaching assignments for this faculty in the target period using the ObjectId
       const teachingAssignments = await TeachingAssignment.find({
         faculty: facultyId,
         feedbackPeriod: targetFeedbackPeriod._id,
@@ -50,23 +59,20 @@ router.get(
         .populate("class", "name branch semester");
 
       if (teachingAssignments.length === 0) {
-        return res.status(404).json({
+        return res.status(200).json({
           message: "No teaching assignments found for this feedback period",
+          ratings: [],
+          feedbackPeriod: targetFeedbackPeriod,
         });
       }
 
-      // Get all rating parameters (assuming 5 from seed-rating.js)
+      // Get all rating parameters
       const ratingParameters = await RatingParameter.find();
-      if (ratingParameters.length !== 5) {
-        return res.status(500).json({
-          message: "Server error: Expected exactly 5 rating parameters",
-        });
-      }
 
       // Fetch aggregated ratings for these assignments
       const aggregatedRatings = await AggregatedRating.find({
         teachingAssignment: { $in: teachingAssignments.map((ta) => ta._id) },
-      }).populate("ratingParameter", "name");
+      }).populate("ratingParameter", "name questionText");
 
       // Organize ratings by assignment
       const ratingsByAssignment = teachingAssignments.map((assignment) => {
@@ -79,7 +85,7 @@ router.get(
             (ar) => ar.ratingParameter._id.toString() === param._id.toString()
           );
           return {
-            parameter: param.name,
+            parameter: param.questionText, // Use the full question text
             averageRating: rating ? rating.averageRating.toFixed(2) : "N/A",
             totalResponses: rating ? rating.totalResponses : 0,
           };

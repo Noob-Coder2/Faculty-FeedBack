@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { query } = require('express-validator');
+const { query, param } = require('express-validator');
 const validate = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/role');
@@ -12,14 +12,15 @@ const FacultyProfile = require('../models/FacultyProfile');
 const User = require('../models/User');
 const Subject = require('../models/Subject');
 const Class = require('../models/Class');
+const RatingParameter = require('../models/RatingParameter');
 
-// GET /api/admin/faculty-ratings - View faculty ratings (admin only)
+// GET /api/admin/faculty-ratings/:facultyId - View a specific faculty's ratings (admin only)
 router.get(
-  '/',
+  '/:facultyId',
   [
     auth,
     checkRole(['admin']),
-    query('facultyId').optional().isMongoId().withMessage('Invalid faculty ID'),
+    param('facultyId').isMongoId().withMessage('Invalid faculty ID'),
     query('subjectId').optional().isMongoId().withMessage('Invalid subject ID'),
     query('feedbackPeriodId').optional().isMongoId().withMessage('Invalid feedback period ID'),
     query('page').optional().isInt({ min: 1 }).toInt().withMessage('Page must be a positive integer'),
@@ -28,11 +29,11 @@ router.get(
   validate,
   async (req, res) => {
     try {
-      const { facultyId, subjectId, feedbackPeriodId, page = 1, limit = 10 } = req.query;
+      const { facultyId } = req.params;
+      const { subjectId, feedbackPeriodId, page = 1, limit = 10 } = req.query;
 
       // Build match conditions for aggregation
-      const match = {};
-      if (facultyId) match['facultyProfile.user'] = new mongoose.Types.ObjectId(facultyId);
+      const match = { 'facultyProfile.user': new mongoose.Types.ObjectId(facultyId) };
       if (subjectId) match['teachingAssignment.subject'] = new mongoose.Types.ObjectId(subjectId);
       if (feedbackPeriodId) match['teachingAssignment.feedbackPeriod'] = new mongoose.Types.ObjectId(feedbackPeriodId);
 
@@ -53,7 +54,7 @@ router.get(
           $lookup: {
             from: 'facultyprofiles',
             localField: 'teachingAssignment.faculty',
-            foreignField: '_id',
+            foreignField: 'user',
             as: 'facultyProfile',
           },
         },
@@ -154,7 +155,7 @@ router.get(
       const total = await AggregatedRating.aggregate([
         { $lookup: { from: 'teachingassignments', localField: 'teachingAssignment', foreignField: '_id', as: 'teachingAssignment' } },
         { $unwind: '$teachingAssignment' },
-        { $lookup: { from: 'facultyprofiles', localField: 'teachingAssignment.faculty', foreignField: '_id', as: 'facultyProfile' } },
+        { $lookup: { from: 'facultyprofiles', localField: 'teachingAssignment.faculty', foreignField: 'user', as: 'facultyProfile' } },
         { $unwind: '$facultyProfile' },
         { $lookup: { from: 'subjects', localField: 'teachingAssignment.subject', foreignField: '_id', as: 'subject' } },
         { $unwind: '$subject' },
