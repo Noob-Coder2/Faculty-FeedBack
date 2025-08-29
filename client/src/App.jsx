@@ -92,28 +92,14 @@ const RouteErrorBoundary = ({ children }) => {
 
 const App = () => {
   const [error, setError] = useState(null);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
   const dispatch = useDispatch();
   const { isAuthenticated, loading, error: authError } = useSelector(selectAuth);
   const { error: feedbackError } = useSelector(state => state.feedback);
   const { error: profileError } = useSelector(state => state.profile);
-  const location = window.location.pathname;
-  const isPublicRoute = ['/login', '/register'].includes(location);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    if (!isPublicRoute && !isAuthenticated && !loading) {
-      dispatch(checkAuth()).catch(() => {
-        if (isMounted) {
-          setShouldRedirect(true);
-        }
-      });
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [dispatch, isAuthenticated, loading, isPublicRoute]);
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   useEffect(() => {
     // Combine errors from Redux slices
@@ -125,11 +111,6 @@ const App = () => {
       setError(profileError);
     }
   }, [authError, feedbackError, profileError]);
-
-  // Handle auth redirect
-  if (shouldRedirect && !isPublicRoute) {
-    return <Navigate to="/login" replace />;
-  }
 
   return (
     <ErrorContext.Provider value={{ error, setError }}>

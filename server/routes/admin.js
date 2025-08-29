@@ -10,6 +10,7 @@ const User = require('../models/User');
 const StudentProfile = require('../models/StudentProfile');
 const FacultyProfile = require('../models/FacultyProfile');
 const Subject = require('../models/Subject');
+const Class = require('../models/Class');
 
 // POST /api/admin/users - Create a new user (admin only)
 router.post(
@@ -62,6 +63,15 @@ router.post(
             .withMessage('Admission year is required for students')
             .isInt({ min: 2000, max: new Date().getFullYear() })
             .withMessage('Admission year must be between 2000 and the current year'),
+        body('subjects')
+            .if(body('role').equals('student'))
+            .optional()
+            .isArray()
+            .withMessage('Subjects must be an array of subject IDs'),
+        body('subjects.*')
+            .if(body('role').equals('student'))
+            .isMongoId()
+            .withMessage('Each subject must be a valid MongoDB ID'),
         // Faculty-specific fields
         body('department')
             .if(body('role').equals('faculty'))
@@ -143,6 +153,7 @@ router.post(
                     semester,
                     section,
                     admissionYear,
+                    subjects: subjects || [],
                     pendingMapping: !classId, // Set to true if no matching class found
                 });
             } else if (role === 'faculty') {
@@ -436,8 +447,8 @@ router.delete(
 // GET /api/admin/pending-students
 router.get('/pending-students', async (req, res) => {
     try {
-        const pendingStudents = await StudentProfile.find({ pendingMapping: false })
-            .populate('user', 'userId email');
+        const pendingStudents = await StudentProfile.find({ pendingMapping: true })
+            .populate('user', 'userId name email');
         res.status(200).json({ message: 'Pending students retrieved', students: pendingStudents });
     } catch (error) {
         console.error('Get Pending Students Error:', error);
@@ -446,8 +457,7 @@ router.get('/pending-students', async (req, res) => {
 });
 
 
-// PUT /api/admin/map-student/:id - Manually map a student to a class.
-
+// PUT /api/admin/map-student/:id - Manually map a student to a class and trigger bulk mapping.
 router.put('/map-student/:id', [
     param('id').isMongoId().withMessage('Valid student profile ID required'),
     body('classId').isMongoId().withMessage('Valid class ID required'),
@@ -457,18 +467,45 @@ router.put('/map-student/:id', [
         const { classId } = req.body;
 
         const studentProfile = await StudentProfile.findById(id);
-        if (!studentProfile) return res.status(404).json({ message: 'Student profile not found' });
+        if (!studentProfile) {
+            return res.status(404).json({ message: 'Student profile not found' });
+        }
 
         const classDoc = await Class.findById(classId);
-        if (!classDoc) return res.status(404).json({ message: 'Class not found' });
+        if (!classDoc) {
+            return res.status(404).json({ message: 'Class not found' });
+        }
 
+        // Map the single student
         studentProfile.classId = classId;
         studentProfile.pendingMapping = false;
         await studentProfile.save();
 
-        res.status(200).json({ message: 'Student mapped successfully', studentProfile });
+        // **SMART MAPPING LOGIC**
+        // Now, find all other pending students in the same section with the same subjects and map them.
+        const { branch, semester, section, subjects } = studentProfile;
+        const result = await StudentProfile.updateMany(
+            {
+                branch,
+                semester,
+                section,
+                subjects: subjects, // Match the exact array of subjects
+                pendingMapping: true // Only update students who are pending
+            },
+            {
+                $set: {
+                    classId: classId,
+                    pendingMapping: false
+                }
+            }
+        );
+
+        const message = `Student mapped successfully. Additionally, ${result.modifiedCount} other students with the same subjects in the same section were automatically mapped.`;
+        logger.infoWithContext(message, req, { studentId: id, classId, modifiedCount: result.modifiedCount });
+
+        res.status(200).json({ message, studentProfile });
     } catch (error) {
-        console.error('Map Student Error:', error);
+        logger.errorWithContext('Map Student Error', req, error);
         res.status(500).json({ message: 'Server error' });
     }
 });

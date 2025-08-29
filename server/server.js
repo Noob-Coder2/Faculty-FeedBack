@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
 require('dotenv').config();
 
 const bodyParser = require('body-parser');
@@ -23,7 +24,7 @@ const facultyRoutes = require('./routes/faculty');
 const profileRoutes = require('./routes/profile');
 const changePasswordRoutes = require('./routes/change-password');
 
-// import middleware
+// import custom middleware
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
 const validate = require('./middleware/validate');
@@ -58,6 +59,7 @@ app.use(cors({
 app.use(cookieParser()); // Add cookie parsing
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(mongoSanitize()); // Prevent NoSQL injection
 
 // Request logging middleware
 app.use((req, res, next) => {

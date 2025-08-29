@@ -32,6 +32,10 @@ const studentProfileSchema = new mongoose.Schema({
     type: Number,
     required: true, // Admission year is required (e.g., 2020)
   },
+  subjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject'
+  }],
   status: {
     type: String,
     enum: ['active', 'graduated', 'inactive', 'dropped'], // Status can be 'active', 'graduated', 'inactive', or 'dropped'
@@ -39,7 +43,7 @@ const studentProfileSchema = new mongoose.Schema({
   },
   pendingMapping: {
     type: Boolean,
-    default: true, // Default to false (no pending mapping)
+    default: true, // Default to true (pending mapping) until explicitly mapped
   }},{timestamps: true}); // Automatically manage createdAt and updatedAt fields
 
 // Model export

@@ -193,51 +193,51 @@ const seedData = async () => {
     const studentData = [
       {
         user: { userId: 'STU001', name: 'Alice Johnson', email: 'alice@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU002', name: 'Bob Brown', email: 'bob@example.com', password: 'student1234', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU003', name: 'Charlie Davis', email: 'charlie@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 1, section: 'A', classId: savedClasses[0]._id, admissionYear: 2024, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 1, section: 'A', classId: savedClasses[0]._id, admissionYear: 2024, subjects: [savedSubjects[0]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU004', name: 'Diana Evans', email: 'diana@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, pendingMapping: false },
+        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, subjects: [savedSubjects[5]._id, savedSubjects[6]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU005', name: 'Evan Foster', email: 'evan@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, pendingMapping: false },
+        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, subjects: [savedSubjects[7]._id, savedSubjects[15]._id, savedSubjects[11]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU006', name: 'Fiona Green', email: 'fiona@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 5, section: 'B', classId: savedClasses[4]._id, admissionYear: 2021, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 5, section: 'B', classId: savedClasses[4]._id, admissionYear: 2021, subjects: [savedSubjects[4]._id, savedSubjects[8]._id, savedSubjects[12]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU007', name: 'George Hill', email: 'george@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'EE', semester: 6, section: 'A', classId: savedClasses[5]._id, admissionYear: 2020, pendingMapping: false },
+        profile: { branch: 'EE', semester: 6, section: 'A', classId: savedClasses[5]._id, admissionYear: 2020, subjects: [savedSubjects[9]._id, savedSubjects[15]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU008', name: 'Hannah Ives', email: 'hannah@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU009', name: 'Ian James', email: 'ian@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, pendingMapping: false },
+        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, subjects: [savedSubjects[5]._id, savedSubjects[6]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU010', name: 'Julia King', email: 'julia@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, pendingMapping: false },
+        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, subjects: [savedSubjects[7]._id, savedSubjects[15]._id, savedSubjects[11]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU011', name: 'Kevin Lee', email: 'kevin@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 6, section: 'A', classId: savedClasses[6]._id, admissionYear: 2020, pendingMapping: false },
+        profile: { branch: 'CSE', semester: 6, section: 'A', classId: savedClasses[6]._id, admissionYear: 2020, subjects: [savedSubjects[10]._id, savedSubjects[13]._id], pendingMapping: false },
       },
       {
         user: { userId: 'STU012', name: 'Laura Martin', email: 'laura@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 4, section: 'B', classId: savedClasses[7]._id, admissionYear: 2022, pendingMapping: false },
+        profile: { branch: 'ECE', semester: 4, section: 'B', classId: savedClasses[7]._id, admissionYear: 2022, subjects: [savedSubjects[14]._id, savedSubjects[6]._id], pendingMapping: false },
       },
     ];
     const savedStudents = [];

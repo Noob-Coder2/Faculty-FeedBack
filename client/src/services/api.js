@@ -9,20 +9,8 @@ const api = createApiInstance();
 // Authentication APIs
 
 export const login = async (data) => {
-  console.log('Received login data:', data);
-  if (!data) {
-    throw { error: true, message: 'Login data is required' };
-  } 
-  const userId = data.userId ?? '';
-  const password = data.password ?? '';
-  if (typeof userId !== 'string' || userId.trim() === '') {
-    throw { error: true, message: 'User ID is required and must be a non-empty string' };
-  }
-  if (typeof password !== 'string' || password.trim() === '') {
-    throw { error: true, message: 'Password is required and must be a non-empty string' };
-  }
   try {
-    const response = await api.post('/auth/login', { userId, password });
+    const response = await api.post('/auth/login', data);
     return response.data;
   } catch (error) {
     throw handleError(error);

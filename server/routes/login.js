@@ -6,9 +6,6 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const validate = require('../middleware/validate');
 const User = require('../models/User');
-const StudentProfile = require('../models/StudentProfile');
-const FacultyProfile = require('../models/FacultyProfile');
-const Class = require('../models/Class');
 const logger = require('../utils/logger');
 
 
@@ -37,27 +34,6 @@ router.post(
         if (!isMatch) {
           logger.errorWithContext('Invalid credentials: password mismatch', req, { userId });
           return res.status(401).json({ message: 'Invalid credentials' });
-        }
-  
-        // For students, check and update mapping
-        if (user.role === 'student') {
-          const studentProfile = await StudentProfile.findOne({ user: user._id });
-          if (studentProfile && studentProfile.pendingMapping) {
-            // Look for a mapped peer in the same section
-            const mappedPeer = await StudentProfile.findOne({
-              branch: studentProfile.branch,
-              semester: studentProfile.semester,
-              section: studentProfile.section,
-              pendingMapping: false,
-              classId: { $ne: null },
-            });
-  
-            if (mappedPeer) {
-              studentProfile.classId = mappedPeer.classId;
-              studentProfile.pendingMapping = false;
-              await studentProfile.save();
-            }
-          }
         }
   
         // Generate JWT
