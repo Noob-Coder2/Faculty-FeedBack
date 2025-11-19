@@ -1,6 +1,14 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
+let store;
+let logoutAction;
+
+export const injectStore = (_store, _logoutAction) => {
+    store = _store;
+    logoutAction = _logoutAction;
+};
+
 export const createApiInstance = (onUnauthorized) => {
     // Axios instance with retry logic
     const api = axios.create({
@@ -25,9 +33,15 @@ export const createApiInstance = (onUnauthorized) => {
     api.interceptors.response.use(
         (response) => response,
         async (error) => {
-            if (error.response?.status === 401 && typeof onUnauthorized === 'function') {
-                // Execute the provided unauthorized handler
-                onUnauthorized();
+            if (error.response?.status === 401) {
+                if (typeof onUnauthorized === 'function') {
+                    // Execute the provided unauthorized handler
+                    onUnauthorized();
+                }
+                // Dispatch logout action if store is available
+                if (store && logoutAction) {
+                    store.dispatch(logoutAction());
+                }
             }
             return Promise.reject(error);
         }

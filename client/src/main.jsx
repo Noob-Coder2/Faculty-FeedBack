@@ -6,8 +6,13 @@ import { ThemeProvider } from '@mui/material';
 
 import App from './App.jsx';
 import { store } from './store/store';
+import { logout } from './store/authSlice';
 import theme from './theme';
 import './index.css';
+import { injectStore } from './utils/apiUtils';
+
+// Inject store and logout action into API utils
+injectStore(store, logout);
 
 const ErrorBoundary = ({ children }) => {
   const [hasError, setHasError] = useState(false);

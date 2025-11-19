@@ -8,7 +8,7 @@ import {
   Alert, Button
 } from '@mui/material';
 import { getUsers, getClasses, getTeachingAssignments } from '../services/api';
-import { logoutUser } from '../store/authSlice';
+import { logout } from '../store/authSlice';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -70,7 +70,7 @@ function AdminDashboard() {
   }, [userPage, classPage, assignmentPage]);
 
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch(logout());
     navigate('/login');
   };
 

@@ -6,8 +6,7 @@ import { Box, Typography, Avatar, Button, TextField, CircularProgress } from '@m
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { fetchProfile, saveProfile, clearProfileState } from '../store/profileSlice';
-import { logoutUser } from '../store/authSlice';
-import { logout } from '../services/api';
+import { logout } from '../store/authSlice';
 
 
 function ProfilePage() {
@@ -30,8 +29,7 @@ function ProfilePage() {
   }, [user]);
 
   const handleLogout = async () => {
-    await logout();
-    dispatch(logoutUser());
+    await dispatch(logout());
     navigate('/login');
   };
 

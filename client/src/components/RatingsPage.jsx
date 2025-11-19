@@ -1,4 +1,3 @@
-// src/components/RatingsPage.jsx
 import { useState, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, Table, TableBody, TableCell, TableHead, TableRow, CircularProgress, Alert, TableContainer, Paper, Grid } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -18,7 +17,7 @@ function RatingsPage() {
         setError('');
         const data = await getFacultyRatings();
         setRatingsData(data);
-      } catch (err) {
+      } catch (err){
         setError(err.message || 'Failed to fetch ratings.');
       } finally {
         setLoading(false);
@@ -76,7 +75,8 @@ function RatingsPage() {
                 Class: {rating.class.name} | Semester: {rating.subject.semester}
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={7}>
+                {/* Correct Grid v2 Syntax */}
+               <Grid size={{ xs: 12, md: 5 }}>
                   <TableContainer component={Paper}>
                     <Table size="small" aria-label="ratings table">
                       <TableHead>
@@ -100,7 +100,8 @@ function RatingsPage() {
                     </Table>
                   </TableContainer>
                 </Grid>
-                <Grid item xs={12} md={5}>
+                {/* Correct Grid v2 Syntax */}
+              <Grid size={{ xs: 12, md: 5 }}>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -118,7 +119,6 @@ function RatingsPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>

@@ -5,8 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faComment, faLock, faSignOutAlt, faStar } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch } from 'react-redux';
 import debounce from 'lodash/debounce';
-import { searchFaculty, logout } from '../../services/api';
-import { logoutUser } from '../../store/authSlice';
+import { searchFaculty } from '../../services/api';
+import { logout } from '../../store/authSlice';
 import PropTypes from 'prop-types';
 
 function DashboardLayout({ role, children, activeTab, setActiveTab }) {
@@ -45,9 +45,8 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
   };
 
   const handleLogout = async () => {
-    await logout(); // Call API to clear server-side cookie
-    dispatch(logoutUser()); // Clear client-side Redux state
-    navigate('/login'); // Redirect to login page
+    await dispatch(logout());
+    navigate('/login', { replace: true });
   };
 
   const tabs = [
@@ -121,10 +120,10 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
 }
 
 DashboardLayout.propTypes = {
-    role: PropTypes.string.isRequired,
-    children: PropTypes.node.isRequired,
-    activeTab: PropTypes.string.isRequired,
-    setActiveTab: PropTypes.func.isRequired,
+  role: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  activeTab: PropTypes.string.isRequired,
+  setActiveTab: PropTypes.func.isRequired,
 };
 
 export default DashboardLayout;
