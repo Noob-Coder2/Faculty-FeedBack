@@ -6,6 +6,27 @@ import { getCacheKey, getCachedResponse, setCachedResponse, CACHE_TTL, getCached
 const api = createApiInstance();
 
 // API functions with caching and retries
+
+// Dashboard Stats (Admin)
+export const getDashboardStats = async () => {
+  try {
+    const response = await api.get('/admin/dashboard-stats');
+    return response.data;
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+// Get all faculty for dropdowns
+export const getAllFaculty = async () => {
+  try {
+    const response = await api.get('/admin/users', { params: { role: 'faculty', limit: 100 } });
+    return response.data.users || [];
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
 // Authentication APIs
 
 export const login = async (data) => {

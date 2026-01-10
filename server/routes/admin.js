@@ -11,6 +11,59 @@ const StudentProfile = require('../models/StudentProfile');
 const FacultyProfile = require('../models/FacultyProfile');
 const Subject = require('../models/Subject');
 const Class = require('../models/Class');
+const FeedbackPeriod = require('../models/FeedbackPeriod');
+const Feedback = require('../models/Feedback');
+const TeachingAssignment = require('../models/TeachingAssignment');
+
+// GET /api/admin/dashboard-stats - Get dashboard statistics
+router.get('/dashboard-stats', async (req, res) => {
+    try {
+        // User counts by role
+        const [studentCount, facultyCount, adminCount] = await Promise.all([
+            User.countDocuments({ role: 'student' }),
+            User.countDocuments({ role: 'faculty' }),
+            User.countDocuments({ role: 'admin' })
+        ]);
+
+        // Active feedback periods
+        const currentDate = new Date();
+        const activePeriods = await FeedbackPeriod.find({
+            startDate: { $lte: currentDate },
+            endDate: { $gte: currentDate },
+            isActive: true
+        });
+
+        // Total feedback submissions
+        const totalFeedbacks = await Feedback.countDocuments();
+
+        // Total teaching assignments
+        const totalAssignments = await TeachingAssignment.countDocuments();
+
+        // Total subjects and classes
+        const [totalSubjects, totalClasses] = await Promise.all([
+            Subject.countDocuments(),
+            Class.countDocuments()
+        ]);
+
+        res.status(200).json({
+            users: {
+                total: studentCount + facultyCount + adminCount,
+                students: studentCount,
+                faculty: facultyCount,
+                admins: adminCount
+            },
+            activePeriods: activePeriods.length,
+            activePeriodsDetails: activePeriods.map(p => ({ name: p.name, endDate: p.endDate })),
+            totalFeedbacks,
+            totalAssignments,
+            totalSubjects,
+            totalClasses
+        });
+    } catch (error) {
+        logger.error('Dashboard Stats Error:', error);
+        res.status(500).json({ message: 'Server error while fetching dashboard stats' });
+    }
+});
 
 // POST /api/admin/users - Create a new user (admin only)
 router.post(

@@ -35,13 +35,13 @@ function FacultyAnalytics() {
                 <Skeleton variant="text" width={300} height={60} sx={{ mb: 4 }} />
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     {[1, 2, 3].map((item) => (
-                        <Grid item xs={12} md={4} key={item}>
+                        <Grid size={{ xs: 12, md: 4 }} key={item}>
                             <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 2 }} />
                         </Grid>
                     ))}
                 </Grid>
                 <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
                     </Grid>
                 </Grid>
@@ -63,7 +63,7 @@ function FacultyAnalytics() {
 
             {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Current Rating</Typography>
@@ -72,7 +72,7 @@ function FacultyAnalytics() {
                         </CardContent>
                     </Card>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2, background: 'linear-gradient(135deg, #2af598 0%, #009efd 100%)', color: 'white' }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Department Average</Typography>
@@ -81,7 +81,7 @@ function FacultyAnalytics() {
                         </CardContent>
                     </Card>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2, background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', color: 'white' }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Trend</Typography>
@@ -98,7 +98,7 @@ function FacultyAnalytics() {
 
             {/* Charts */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>Overall Ratings Over Time</Typography>

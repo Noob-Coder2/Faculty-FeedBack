@@ -33,7 +33,7 @@ function FeedbackPage() {
       ) : (
         <Grid container spacing={2}>
           {assignments.map((assignment) => (
-            <Grid item xs={12} sm={6} md={4} key={assignment._id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={assignment._id}>
               <Card>
                 <CardContent>
                   <Typography variant="h6">{assignment.faculty.name}</Typography>

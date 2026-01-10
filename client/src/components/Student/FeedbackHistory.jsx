@@ -31,7 +31,7 @@ function FeedbackHistory() {
                 <Skeleton variant="text" width={300} height={60} sx={{ mb: 4 }} />
                 <Grid container spacing={3}>
                     {[1, 2, 3].map((item) => (
-                        <Grid item xs={12} key={item}>
+                        <Grid size={{ xs: 12 }} key={item}>
                             <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 2 }} />
                         </Grid>
                     ))}
@@ -53,11 +53,11 @@ function FeedbackHistory() {
             ) : (
                 <Grid container spacing={3}>
                     {history.map((submission) => (
-                        <Grid item xs={12} key={submission.id}>
+                        <Grid size={{ xs: 12 }} key={submission.id}>
                             <Card sx={{ boxShadow: 2, borderRadius: 2 }}>
                                 <CardContent>
                                     <Grid container spacing={2} alignItems="center">
-                                        <Grid item xs={12} md={4}>
+                                        <Grid size={{ xs: 12, md: 4 }}>
                                             <Typography variant="h6" color="primary">
                                                 {submission.facultyName}
                                             </Typography>
@@ -73,7 +73,7 @@ function FeedbackHistory() {
                                                 Submitted on: {new Date(submission.date).toLocaleDateString()}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={12} md={8}>
+                                        <Grid size={{ xs: 12, md: 8 }}>
                                             <Typography variant="subtitle2" gutterBottom>Ratings Given:</Typography>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                                                 {submission.ratings.map((rating, index) => (
