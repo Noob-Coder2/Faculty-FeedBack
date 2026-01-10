@@ -1,6 +1,6 @@
 // server/seed.js
 const mongoose = require('mongoose');
-require('dotenv').config({ path: './server/.env' });
+require('dotenv').config();
 
 const User = require('./models/User');
 const StudentProfile = require('./models/StudentProfile');
@@ -158,18 +158,16 @@ const seedData = async () => {
       await StudentProfile.create({ user: saved._id, ...profile });
       savedStudents.push(saved);
     }
-    // Update classes with student IDs
-    await Class.findByIdAndUpdate(savedClasses[1]._id, { $set: { students: savedStudents.map(s => s._id) } });
     console.log('Students seeded');
 
     // Teaching Assignments
     const teachingAssignments = [
       // Past Period (Fall 2024)
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id },
 
       // Current Period (Spring 2025)
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[13]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[13]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id },
     ];
     const savedTeachingAssignments = await TeachingAssignment.insertMany(teachingAssignments);
     console.log('Teaching Assignments seeded');

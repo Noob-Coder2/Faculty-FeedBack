@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Snackbar, Alert, CircularProgress, Box } from '@mui/material';
-import { ErrorBoundary } from 'react-error-boundary';
 
 import { checkAuth, selectAuth } from './store/authSlice';
 import Login from './pages/Login';

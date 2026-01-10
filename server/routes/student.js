@@ -15,9 +15,15 @@ router.get(
   validate,
   async (req, res) => {
     try {
-      const studentId = req.user._id;
+      const userId = req.user.id; // This is the userId string (e.g., "STU001")
 
-      const studentProfile = await StudentProfile.findOne({ user: studentId });
+      // First, find the user to get the MongoDB ObjectId
+      const user = await User.findOne({ userId });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const studentProfile = await StudentProfile.findOne({ user: user._id });
       if (!studentProfile) {
         return res.status(400).json({ message: 'Student profile not found' });
       }
@@ -401,10 +407,16 @@ router.get(
   validate,
   async (req, res) => {
     try {
-      const studentId = req.user.id;
+      const userId = req.user.id; // This is the userId string (e.g., "STU001")
       const Feedback = require('../models/Feedback');
 
-      const history = await Feedback.find({ student: studentId })
+      // First, find the user to get the MongoDB ObjectId
+      const user = await User.findOne({ userId });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const history = await Feedback.find({ student: user._id })
         .populate({
           path: 'teachingAssignment',
           populate: { path: 'faculty subject feedbackPeriod', select: 'name subjectName name' }

@@ -489,3 +489,6 @@ export const resetPassword = async (token, password) => {
     throw handleError(error);
   }
 };
+
+// Default export for components that import the raw api instance
+export default api;

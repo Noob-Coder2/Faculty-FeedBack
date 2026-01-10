@@ -1,4 +1,3 @@
-```javascript
 // src/pages/StudentDashboard.jsx
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -41,7 +40,7 @@ function StudentDashboard() {
         <Alert severity="info" sx={{ mb: 2 }}>
           <strong>Anonymous Feedback Guarantee:</strong> Your identity is protected. Faculty members see aggregated ratings and anonymous comments only.
         </Alert>
-        
+
         {loading ? (
           <span>Loading summary...</span>
         ) : error ? (
@@ -58,4 +57,3 @@ function StudentDashboard() {
 }
 
 export default StudentDashboard;
-```
