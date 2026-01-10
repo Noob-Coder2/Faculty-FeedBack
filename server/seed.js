@@ -1,6 +1,6 @@
 // server/seed.js
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ path: './server/.env' });
 
 const User = require('./models/User');
 const StudentProfile = require('./models/StudentProfile');
@@ -11,8 +11,9 @@ const FeedbackPeriod = require('./models/FeedbackPeriod');
 const RatingParameter = require('./models/RatingParameter');
 const TeachingAssignment = require('./models/TeachingAssignment');
 const AggregatedRating = require('./models/AggregatedRating');
+const Feedback = require('./models/Feedback');
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB for seeding'))
   .catch(err => {
     console.error('MongoDB connection error:', err);
@@ -31,6 +32,7 @@ const seedData = async () => {
       RatingParameter.deleteMany({}),
       TeachingAssignment.deleteMany({}),
       AggregatedRating.deleteMany({}),
+      Feedback.deleteMany({}),
       User.deleteMany({ role: { $ne: 'admin' } }),
     ]);
     console.log('Non-admin data cleared');
@@ -71,8 +73,17 @@ const seedData = async () => {
     const savedSubjects = await Subject.insertMany(subjects);
     console.log('Subjects seeded');
 
-    // Feedback Periods
+    // Feedback Periods (Past and Current)
     const feedbackPeriods = [
+      {
+        name: 'Fall 2024 Feedback',
+        semester: 1,
+        year: 2024,
+        startDate: new Date('2024-11-01'),
+        endDate: new Date('2024-11-15'),
+        isActive: false,
+        status: 'closed',
+      },
       {
         name: 'Spring 2025 Feedback',
         semester: 2,
@@ -106,7 +117,7 @@ const seedData = async () => {
           designation: 'Professor',
           joiningYear: 2015,
           qualifications: ['PhD'],
-          subjects: [savedSubjects[0]._id, savedSubjects[1]._id, savedSubjects[13]._id], // CS101, CS302, CS303
+          subjects: [savedSubjects[0]._id, savedSubjects[1]._id, savedSubjects[13]._id],
         },
       },
       {
@@ -116,67 +127,7 @@ const seedData = async () => {
           designation: 'Associate Professor',
           joiningYear: 2018,
           qualifications: ['MTech', 'PhD'],
-          subjects: [savedSubjects[5]._id, savedSubjects[6]._id, savedSubjects[14]._id], // EC202, EC301, EC402
-        },
-      },
-      {
-        user: { userId: 'FAC003', name: 'Dr. Emily Chen', email: 'emily.chen@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Mechanical',
-          designation: 'Professor',
-          joiningYear: 2012,
-          qualifications: ['PhD'],
-          subjects: [savedSubjects[7]._id, savedSubjects[8]._id, savedSubjects[15]._id], // ME401, ME501, ME601
-        },
-      },
-      {
-        user: { userId: 'FAC004', name: 'Prof. Raj Patel', email: 'raj.patel@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Electrical',
-          designation: 'Assistant Professor',
-          joiningYear: 2020,
-          qualifications: ['MTech'],
-          subjects: [savedSubjects[9]._id, savedSubjects[11]._id], // EE601, EE401
-        },
-      },
-      {
-        user: { userId: 'FAC005', name: 'Dr. Sarah Kim', email: 'sarah.kim@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Computer Science',
-          designation: 'Professor',
-          joiningYear: 2016,
-          qualifications: ['PhD'],
-          subjects: [savedSubjects[4]._id, savedSubjects[10]._id], // CS502, CS601
-        },
-      },
-      {
-        user: { userId: 'FAC006', name: 'Dr. Alice Wong', email: 'alice.wong@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Computer Science',
-          designation: 'Associate Professor',
-          joiningYear: 2017,
-          qualifications: ['PhD'],
-          subjects: [savedSubjects[12]._id, savedSubjects[13]._id], // CS503, CS303
-        },
-      },
-      {
-        user: { userId: 'FAC007', name: 'Prof. David Kumar', email: 'david.kumar@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Electronics',
-          designation: 'Professor',
-          joiningYear: 2014,
-          qualifications: ['MTech', 'PhD'],
-          subjects: [savedSubjects[14]._id, savedSubjects[6]._id], // EC402, EC301
-        },
-      },
-      {
-        user: { userId: 'FAC008', name: 'Dr. Michael Brown', email: 'michael.brown@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Mechanical',
-          designation: 'Assistant Professor',
-          joiningYear: 2019,
-          qualifications: ['PhD'],
-          subjects: [savedSubjects[15]._id, savedSubjects[7]._id], // ME601, ME401
+          subjects: [savedSubjects[5]._id, savedSubjects[6]._id, savedSubjects[14]._id],
         },
       },
     ];
@@ -196,48 +147,8 @@ const seedData = async () => {
         profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
       },
       {
-        user: { userId: 'STU002', name: 'Bob Brown', email: 'bob@example.com', password: 'student1234', role: 'student' },
+        user: { userId: 'STU002', name: 'Bob Brown', email: 'bob@example.com', password: 'student123', role: 'student' },
         profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU003', name: 'Charlie Davis', email: 'charlie@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 1, section: 'A', classId: savedClasses[0]._id, admissionYear: 2024, subjects: [savedSubjects[0]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU004', name: 'Diana Evans', email: 'diana@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, subjects: [savedSubjects[5]._id, savedSubjects[6]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU005', name: 'Evan Foster', email: 'evan@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, subjects: [savedSubjects[7]._id, savedSubjects[15]._id, savedSubjects[11]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU006', name: 'Fiona Green', email: 'fiona@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 5, section: 'B', classId: savedClasses[4]._id, admissionYear: 2021, subjects: [savedSubjects[4]._id, savedSubjects[8]._id, savedSubjects[12]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU007', name: 'George Hill', email: 'george@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'EE', semester: 6, section: 'A', classId: savedClasses[5]._id, admissionYear: 2020, subjects: [savedSubjects[9]._id, savedSubjects[15]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU008', name: 'Hannah Ives', email: 'hannah@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU009', name: 'Ian James', email: 'ian@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 2, section: 'B', classId: savedClasses[2]._id, admissionYear: 2024, subjects: [savedSubjects[5]._id, savedSubjects[6]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU010', name: 'Julia King', email: 'julia@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ME', semester: 4, section: 'A', classId: savedClasses[3]._id, admissionYear: 2022, subjects: [savedSubjects[7]._id, savedSubjects[15]._id, savedSubjects[11]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU011', name: 'Kevin Lee', email: 'kevin@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 6, section: 'A', classId: savedClasses[6]._id, admissionYear: 2020, subjects: [savedSubjects[10]._id, savedSubjects[13]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU012', name: 'Laura Martin', email: 'laura@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'ECE', semester: 4, section: 'B', classId: savedClasses[7]._id, admissionYear: 2022, subjects: [savedSubjects[14]._id, savedSubjects[6]._id], pendingMapping: false },
       },
     ];
     const savedStudents = [];
@@ -248,179 +159,75 @@ const seedData = async () => {
       savedStudents.push(saved);
     }
     // Update classes with student IDs
-    await Promise.all([
-      Class.findByIdAndUpdate(savedClasses[0]._id, { $set: { students: [savedStudents[2]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[1]._id, { $set: { students: [savedStudents[0]._id, savedStudents[1]._id, savedStudents[7]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[2]._id, { $set: { students: [savedStudents[3]._id, savedStudents[8]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[3]._id, { $set: { students: [savedStudents[4]._id, savedStudents[9]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[4]._id, { $set: { students: [savedStudents[5]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[5]._id, { $set: { students: [savedStudents[6]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[6]._id, { $set: { students: [savedStudents[10]._id] } }),
-      Class.findByIdAndUpdate(savedClasses[7]._id, { $set: { students: [savedStudents[11]._id] } }),
-    ]);
-    console.log('Students seeded and classes updated');
+    await Class.findByIdAndUpdate(savedClasses[1]._id, { $set: { students: savedStudents.map(s => s._id) } });
+    console.log('Students seeded');
 
     // Teaching Assignments
     const teachingAssignments = [
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[0]._id, class: savedClasses[0]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC001: CS101 in CS101-A
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC001: CS302 in CS301-A
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[13]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC001: CS303 in CS301-A
-      { faculty: savedFaculty[1]._id, subject: savedSubjects[5]._id, class: savedClasses[2]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC002: EC202 in EC201-B
-      { faculty: savedFaculty[1]._id, subject: savedSubjects[6]._id, class: savedClasses[2]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC002: EC301 in EC201-B
-      { faculty: savedFaculty[1]._id, subject: savedSubjects[14]._id, class: savedClasses[7]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC002: EC402 in EC401-B
-      { faculty: savedFaculty[2]._id, subject: savedSubjects[7]._id, class: savedClasses[3]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC003: ME401 in ME401-A
-      { faculty: savedFaculty[2]._id, subject: savedSubjects[8]._id, class: savedClasses[4]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC003: ME501 in CS501-B
-      { faculty: savedFaculty[2]._id, subject: savedSubjects[15]._id, class: savedClasses[3]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC003: ME601 in ME401-A
-      { faculty: savedFaculty[3]._id, subject: savedSubjects[9]._id, class: savedClasses[5]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC004: EE601 in EE601-A
-      { faculty: savedFaculty[3]._id, subject: savedSubjects[11]._id, class: savedClasses[3]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC004: EE401 in ME401-A
-      { faculty: savedFaculty[4]._id, subject: savedSubjects[4]._id, class: savedClasses[4]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC005: CS502 in CS501-B
-      { faculty: savedFaculty[4]._id, subject: savedSubjects[10]._id, class: savedClasses[6]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC005: CS601 in CS601-A
-      { faculty: savedFaculty[5]._id, subject: savedSubjects[12]._id, class: savedClasses[4]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC006: CS503 in CS501-B
-      { faculty: savedFaculty[5]._id, subject: savedSubjects[13]._id, class: savedClasses[6]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC006: CS303 in CS601-A
-      { faculty: savedFaculty[6]._id, subject: savedSubjects[14]._id, class: savedClasses[7]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC007: EC402 in EC401-B
-      { faculty: savedFaculty[6]._id, subject: savedSubjects[6]._id, class: savedClasses[7]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC007: EC301 in EC401-B
-      { faculty: savedFaculty[7]._id, subject: savedSubjects[15]._id, class: savedClasses[5]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC008: ME601 in EE601-A
-      { faculty: savedFaculty[7]._id, subject: savedSubjects[7]._id, class: savedClasses[3]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) }, // FAC008: ME401 in ME401-A
+      // Past Period (Fall 2024)
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
+
+      // Current Period (Spring 2025)
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[13]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id, ratingParameters: savedRatingParameters.map(p => p._id) },
     ];
     const savedTeachingAssignments = await TeachingAssignment.insertMany(teachingAssignments);
     console.log('Teaching Assignments seeded');
 
-    // Aggregated Ratings
-    const aggregatedRatings = [
-      // Assignment 1: FAC001 teaching CS101 in CS101-A (complete feedback from 5 students)
-      {
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: savedRatingParameters[0]._id, // PUNCTUALITY
-        totalResponses: 5,
-        ratingSum: 20,
-        averageRating: 4.0,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: savedRatingParameters[1]._id, // KNOWLEDGE
-        totalResponses: 5,
-        ratingSum: 22,
-        averageRating: 4.4,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: savedRatingParameters[2]._id, // ENGAGEMENT
-        totalResponses: 5,
-        ratingSum: 18,
-        averageRating: 3.6,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: savedRatingParameters[3]._id, // CLARITY
-        totalResponses: 5,
-        ratingSum: 21,
-        averageRating: 4.2,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: savedRatingParameters[4]._id, // SUPPORT
-        totalResponses: 5,
-        ratingSum: 19,
-        averageRating: 3.8,
-      },
-      // Assignment 2: FAC001 teaching CS302 in CS301-A (partial feedback, 3 parameters from 3 students)
-      {
-        teachingAssignment: savedTeachingAssignments[1]._id,
-        ratingParameter: savedRatingParameters[0]._id, // PUNCTUALITY
-        totalResponses: 3,
-        ratingSum: 12,
-        averageRating: 4.0,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[1]._id,
-        ratingParameter: savedRatingParameters[1]._id, // KNOWLEDGE
-        totalResponses: 3,
-        ratingSum: 13,
-        averageRating: 4.33,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[1]._id,
-        ratingParameter: savedRatingParameters[2]._id, // ENGAGEMENT
-        totalResponses: 3,
-        ratingSum: 11,
-        averageRating: 3.67,
-      },
-      // Assignment 3: FAC001 teaching CS303 in CS301-A (complete feedback from 4 students)
-      {
-        teachingAssignment: savedTeachingAssignments[2]._id,
-        ratingParameter: savedRatingParameters[0]._id, // PUNCTUALITY
-        totalResponses: 4,
-        ratingSum: 16,
-        averageRating: 4.0,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[2]._id,
-        ratingParameter: savedRatingParameters[1]._id, // KNOWLEDGE
-        totalResponses: 4,
-        ratingSum: 18,
-        averageRating: 4.5,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[2]._id,
-        ratingParameter: savedRatingParameters[2]._id, // ENGAGEMENT
-        totalResponses: 4,
-        ratingSum: 15,
-        averageRating: 3.75,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[2]._id,
-        ratingParameter: savedRatingParameters[3]._id, // CLARITY
-        totalResponses: 4,
-        ratingSum: 17,
-        averageRating: 4.25,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[2]._id,
-        ratingParameter: savedRatingParameters[4]._id, // SUPPORT
-        totalResponses: 4,
-        ratingSum: 16,
-        averageRating: 4.0,
-      },
-      // Assignment 7: FAC003 teaching ME401 in ME401-A (complete feedback from 6 students)
-      {
-        teachingAssignment: savedTeachingAssignments[6]._id,
-        ratingParameter: savedRatingParameters[0]._id, // PUNCTUALITY
-        totalResponses: 6,
-        ratingSum: 24,
-        averageRating: 4.0,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[6]._id,
-        ratingParameter: savedRatingParameters[1]._id, // KNOWLEDGE
-        totalResponses: 6,
-        ratingSum: 27,
-        averageRating: 4.5,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[6]._id,
-        ratingParameter: savedRatingParameters[2]._id, // ENGAGEMENT
-        totalResponses: 6,
-        ratingSum: 22,
-        averageRating: 3.67,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[6]._id,
-        ratingParameter: savedRatingParameters[3]._id, // CLARITY
-        totalResponses: 6,
-        ratingSum: 25,
-        averageRating: 4.17,
-      },
-      {
-        teachingAssignment: savedTeachingAssignments[6]._id,
-        ratingParameter: savedRatingParameters[4]._id, // SUPPORT
-        totalResponses: 6,
-        ratingSum: 23,
-        averageRating: 3.83,
-      },
-    ];
-    await AggregatedRating.insertMany(aggregatedRatings);
-    console.log('Aggregated Ratings seeded');
+    // --- SEEDING INDIVIDUAL FEEDBACK & AGGREGATED RATINGS ---
 
+    // 1. Past Feedback (Fall 2024) - For Trend Analysis
+    // Student 1 -> Assignment 0 (Jane Smith, CS302, Fall 2024)
+    await Feedback.create({
+      teachingAssignment: savedTeachingAssignments[0]._id,
+      student: savedStudents[0]._id,
+      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 3 })), // Average 3.0
+      comment: "Good but could be better.",
+      submittedAt: new Date('2024-11-10')
+    });
+
+    // Create Aggregated Rating for Assignment 0
+    for (const rp of savedRatingParameters) {
+      await AggregatedRating.create({
+        teachingAssignment: savedTeachingAssignments[0]._id,
+        ratingParameter: rp._id,
+        totalResponses: 1,
+        ratingSum: 3,
+        averageRating: 3.0
+      });
+    }
+
+    // 2. Current Feedback (Spring 2025) - For History & Current Stats
+    // Student 1 -> Assignment 1 (Jane Smith, CS302, Spring 2025)
+    await Feedback.create({
+      teachingAssignment: savedTeachingAssignments[1]._id,
+      student: savedStudents[0]._id,
+      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 5 })), // Average 5.0
+      comment: "Excellent teaching style!",
+      submittedAt: new Date('2025-04-05')
+    });
+
+    // Student 2 -> Assignment 1 (Jane Smith, CS302, Spring 2025)
+    await Feedback.create({
+      teachingAssignment: savedTeachingAssignments[1]._id,
+      student: savedStudents[1]._id,
+      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 4 })), // Average 4.0
+      comment: "Very knowledgeable.",
+      submittedAt: new Date('2025-04-06')
+    });
+
+    // Create Aggregated Rating for Assignment 1 (Total 2 responses, Avg 4.5)
+    for (const rp of savedRatingParameters) {
+      await AggregatedRating.create({
+        teachingAssignment: savedTeachingAssignments[1]._id,
+        ratingParameter: rp._id,
+        totalResponses: 2,
+        ratingSum: 9,
+        averageRating: 4.5
+      });
+    }
+
+    console.log('Feedback and Aggregated Ratings seeded');
     console.log('Database seeded successfully');
   } catch (error) {
     console.error('Seeding Error:', error);

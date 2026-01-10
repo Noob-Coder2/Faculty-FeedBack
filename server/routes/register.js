@@ -18,7 +18,12 @@ router.post(
     body('userId').trim().notEmpty().withMessage('User ID is required'),
     body('name').trim().escape().notEmpty().withMessage('Name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('password')
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number')
+      .matches(/[\W_]/).withMessage('Password must contain at least one special character'),
     body('role').isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
     // Student-specific
     body('branch').if(body('role').equals('student')).trim().notEmpty().withMessage('Branch is required for students'),

@@ -5,10 +5,11 @@ import { useDispatch } from 'react-redux';
 import {
   Box, Container, Typography, Tabs, Tab, Paper, Table, TableContainer,
   TableHead, TableBody, TableRow, TableCell, Pagination, CircularProgress,
-  Alert, Button
+  Alert, Button, TextField, Select, MenuItem, FormControl, InputLabel, Grid, Stack
 } from '@mui/material';
 import { getUsers, getClasses, getTeachingAssignments } from '../services/api';
 import { logout } from '../store/authSlice';
+import api from '../services/api'; // Import raw api instance for file uploads and downloads
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -30,6 +31,7 @@ function AdminDashboard() {
   const [classes, setClasses] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
   const [userPage, setUserPage] = useState(1);
   const [classPage, setClassPage] = useState(1);
@@ -39,17 +41,29 @@ function AdminDashboard() {
   const [totalAssignmentPages, setTotalAssignmentPages] = useState(1);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Search & Filter States
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('');
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const fetchUsers = async () => {
+    try {
+      const usersData = await getUsers(userPage, 10, userSearch, userRoleFilter);
+      setUsers(Array.isArray(usersData.users) ? usersData.users : []);
+      setTotalUserPages(usersData.pagination?.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to fetch users');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        const usersData = await getUsers(userPage);
-        setUsers(Array.isArray(usersData.users) ? usersData.users : []);
-        setTotalUserPages(usersData.pagination?.totalPages || 1);
+        await fetchUsers();
 
         const classesData = await getClasses(classPage);
         setClasses(Array.isArray(classesData.classes) ? classesData.classes : []);
@@ -69,6 +83,11 @@ function AdminDashboard() {
     fetchData();
   }, [userPage, classPage, assignmentPage]);
 
+  // Re-fetch users when search/filter changes
+  useEffect(() => {
+    fetchUsers();
+  }, [userSearch, userRoleFilter]);
+
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
@@ -76,6 +95,8 @@ function AdminDashboard() {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+    setError('');
+    setSuccess('');
   };
 
   const handlePageChange = (type, newPage) => {
@@ -84,7 +105,47 @@ function AdminDashboard() {
     if (type === 'assignments') setAssignmentPage(newPage);
   };
 
-  if (loading) {
+  const handleFileUpload = async (event, type) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setLoading(true);
+      await api.post(`/admin/upload/${type}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setSuccess(`${type} uploaded successfully!`);
+      // Refresh data
+      if (type === 'users') fetchUsers();
+      // if (type === 'classes') fetchClasses(); // Add fetchClasses if needed
+    } catch (err) {
+      setError(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadReport = async (type) => {
+    try {
+      const response = await api.get(`/admin/reports/ratings/${type}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ratings-report.${type === 'excel' ? 'xlsx' : 'pdf'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setError('Failed to download report');
+    }
+  };
+
+  if (loading && !users.length) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
@@ -104,6 +165,7 @@ function AdminDashboard() {
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
       <Paper sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -111,12 +173,49 @@ function AdminDashboard() {
             <Tab label="Users" id="admin-tab-0" />
             <Tab label="Classes" id="admin-tab-1" />
             <Tab label="Teaching Assignments" id="admin-tab-2" />
+            <Tab label="Reports" id="admin-tab-3" />
           </Tabs>
         </Box>
 
         {/* Users Panel */}
         <TabPanel value={tabIndex} index={0}>
-          <Typography variant="h6" gutterBottom>Manage Users</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Manage Users</Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button variant="contained" component="label">
+                Upload Users CSV
+                <input type="file" hidden accept=".csv" onChange={(e) => handleFileUpload(e, 'users')} />
+              </Button>
+            </Box>
+          </Box>
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Search Users"
+                variant="outlined"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Filter by Role</InputLabel>
+                <Select
+                  value={userRoleFilter}
+                  label="Filter by Role"
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                >
+                  <MenuItem value="">All Roles</MenuItem>
+                  <MenuItem value="student">Student</MenuItem>
+                  <MenuItem value="faculty">Faculty</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -151,7 +250,13 @@ function AdminDashboard() {
 
         {/* Classes Panel */}
         <TabPanel value={tabIndex} index={1}>
-          <Typography variant="h6" gutterBottom>Manage Classes</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Manage Classes</Typography>
+            <Button variant="contained" component="label">
+              Upload Classes CSV
+              <input type="file" hidden accept=".csv" onChange={(e) => handleFileUpload(e, 'classes')} />
+            </Button>
+          </Box>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -218,6 +323,20 @@ function AdminDashboard() {
             />
           </Box>
         </TabPanel>
+
+        {/* Reports Panel */}
+        <TabPanel value={tabIndex} index={3}>
+          <Typography variant="h6" gutterBottom>Reports</Typography>
+          <Stack direction="row" spacing={2}>
+            <Button variant="contained" color="primary" onClick={() => downloadReport('pdf')}>
+              Export Ratings PDF
+            </Button>
+            <Button variant="contained" color="success" onClick={() => downloadReport('excel')}>
+              Export Ratings Excel
+            </Button>
+          </Stack>
+        </TabPanel>
+
       </Paper>
     </Container>
   );

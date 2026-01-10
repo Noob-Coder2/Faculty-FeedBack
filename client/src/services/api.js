@@ -81,16 +81,21 @@ export const createUser = async (data) => {
   }
 };
 
-export const getUsers = async (page = 1, limit = 10) => {
+export const getUsers = async (page = 1, limit = 10, search = '', role = '') => {
   if (page < 1 || limit < 1 || limit > 100) {
     throw { error: true, message: 'Invalid pagination parameters' };
   }
-  const cacheKey = getCacheKey('GET', '/admin/users', { page, limit });
+  // Include search and role in cache key to differentiate results
+  const cacheKey = getCacheKey('GET', '/admin/users', { page, limit, search, role });
   const cached = getCachedResponse(cacheKey, CACHE_TTL.assignments);
   if (cached) return cached;
 
   try {
-    const response = await api.get('/admin/users', { params: { page, limit } });
+    const params = { page, limit };
+    if (search) params.search = search;
+    if (role) params.role = role;
+
+    const response = await api.get('/admin/users', { params });
     setCachedResponse(cacheKey, response.data, CACHE_TTL.assignments);
     return response.data;
   } catch (error) {
@@ -462,6 +467,23 @@ export const getUserProfile = async () => {
     const response = await api.get('/auth/profile');
     setCachedResponse(cacheKey, response.data, CACHE_TTL.profile);
     setCachedProfile(response.data);
+    return response.data;
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+export const forgotPassword = async (email) => {
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const resetPassword = async (token, password) => {
+  try {
+    const response = await api.post(`/auth/reset-password/${token}`, { password });
     return response.data;
   } catch (error) {
     throw handleError(error);

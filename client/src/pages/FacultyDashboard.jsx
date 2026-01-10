@@ -1,15 +1,17 @@
-// src/pages/FacultyDashboard.jsx
 import { useState } from 'react';
 import DashboardLayout from '../components/Shared/DashboardLayout';
 import ProfilePage from '../components/ProfilePage';
 import ChangePasswordPage from '../components/Shared/ChangePasswordPage';
 import RatingsPage from '../components/RatingsPage';
+import FacultyAnalytics from '../components/FacultyAnalytics';
 
 function FacultyDashboard() {
-  const [activeTab, setActiveTab] = useState('ratings');
+  const [activeTab, setActiveTab] = useState('analytics'); // Default to analytics for better first impression
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'analytics':
+        return <FacultyAnalytics />;
       case 'ratings':
         return <RatingsPage />;
       case 'profile':
@@ -17,7 +19,7 @@ function FacultyDashboard() {
       case 'password':
         return <ChangePasswordPage />;
       default:
-        return <RatingsPage />;
+        return <FacultyAnalytics />;
     }
   };
 

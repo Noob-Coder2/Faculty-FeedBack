@@ -107,12 +107,13 @@ router.post(
     body('ratings').isArray({ min: 5, max: 5 }).withMessage('Exactly 5 ratings are required'),
     body('ratings.*.ratingParameter').isMongoId().withMessage('Valid rating parameter ID is required'),
     body('ratings.*.value').isInt({ min: 1, max: 5 }).withMessage('Rating value must be between 1 and 5'),
+    body('comment').optional().trim().isLength({ max: 1000 }).withMessage('Comment must be under 1000 characters'),
   ],
   validate,
   async (req, res) => {
     try {
       const studentId = req.user.id;
-      const { teachingAssignment, ratings } = req.body;
+      const { teachingAssignment, ratings, comment } = req.body;
 
       // Verify student profile and class
       const studentProfile = await StudentProfile.findOne({ user: studentId });
@@ -153,14 +154,22 @@ router.post(
         return res.status(400).json({ message: 'Ratings must include exactly one entry for each of the 5 rating parameters' });
       }
 
-      // Check if feedback already submitted (all 5 parameters rated)
-      const existingRatings = await AggregatedRating.find({ teachingAssignment });
-      const ratedParameterIds = new Set(existingRatings.map((ar) => ar.ratingParameter.toString()));
-      if (ratedParameterIds.size === 5) {
+      // Check if feedback already submitted
+      const Feedback = require('../models/Feedback');
+      const existingFeedback = await Feedback.findOne({ teachingAssignment, student: studentId });
+      if (existingFeedback) {
         return res.status(400).json({ message: 'Feedback already submitted for this assignment' });
       }
 
-      // Update or create aggregated ratings
+      // Save individual feedback
+      await Feedback.create({
+        teachingAssignment,
+        student: studentId,
+        ratings,
+        comment
+      });
+
+      // Update aggregated ratings
       for (const rating of ratings) {
         const { ratingParameter, value } = rating;
         let aggregatedRating = await AggregatedRating.findOne({
@@ -211,10 +220,10 @@ router.get(
       const targetFeedbackPeriod = feedbackPeriod
         ? await FeedbackPeriod.findById(feedbackPeriod)
         : await FeedbackPeriod.findOne({
-            startDate: { $lte: currentDate },
-            endDate: { $gte: currentDate },
-            isActive: true,
-          });
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate },
+          isActive: true,
+        });
 
       if (!targetFeedbackPeriod) {
         return res.status(404).json({ message: 'No active or specified feedback period found' });
@@ -295,10 +304,10 @@ router.get(
       const targetFeedbackPeriod = feedbackPeriod
         ? await FeedbackPeriod.findById(feedbackPeriod)
         : await FeedbackPeriod.findOne({
-            startDate: { $lte: currentDate },
-            endDate: { $gte: currentDate },
-            isActive: true,
-          }) || await FeedbackPeriod.findOne({}, {}, { sort: { endDate: -1 } });
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate },
+          isActive: true,
+        }) || await FeedbackPeriod.findOne({}, {}, { sort: { endDate: -1 } });
 
       if (!targetFeedbackPeriod) {
         return res.status(404).json({ message: 'No feedback period found' });
@@ -382,6 +391,40 @@ router.get(
     } catch (error) {
       console.error('Get Faculty Ratings for Student Error:', error);
       res.status(500).json({ message: 'Server error while fetching faculty ratings' });
+    }
+  }
+);
+
+// GET /api/student/history - Get past feedback submissions
+router.get(
+  '/history',
+  validate,
+  async (req, res) => {
+    try {
+      const studentId = req.user.id;
+      const Feedback = require('../models/Feedback');
+
+      const history = await Feedback.find({ student: studentId })
+        .populate({
+          path: 'teachingAssignment',
+          populate: { path: 'faculty subject feedbackPeriod', select: 'name subjectName name' }
+        })
+        .sort({ submittedAt: -1 });
+
+      const formattedHistory = history.map(h => ({
+        id: h._id,
+        facultyName: h.teachingAssignment.faculty.name,
+        subjectName: h.teachingAssignment.subject.subjectName,
+        period: h.teachingAssignment.feedbackPeriod.name,
+        date: h.submittedAt,
+        ratings: h.ratings,
+        comment: h.comment
+      }));
+
+      res.status(200).json({ history: formattedHistory });
+    } catch (error) {
+      console.error('Get Feedback History Error:', error);
+      res.status(500).json({ message: 'Server error while fetching feedback history' });
     }
   }
 );

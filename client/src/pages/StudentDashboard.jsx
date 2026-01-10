@@ -1,9 +1,12 @@
+```javascript
 // src/pages/StudentDashboard.jsx
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Alert, Box } from '@mui/material';
 import DashboardLayout from '../components/Shared/DashboardLayout';
 import ProfilePage from '../components/ProfilePage';
 import FeedbackPage from '../components/FeedbackPage';
+import FeedbackHistory from '../components/Student/FeedbackHistory';
 import ChangePasswordPage from '../components/Shared/ChangePasswordPage';
 import { fetchFeedbackData } from '../store/feedbackSlice';
 
@@ -23,6 +26,8 @@ function StudentDashboard() {
         return <ProfilePage />;
       case 'feedback':
         return <FeedbackPage />;
+      case 'history':
+        return <FeedbackHistory />;
       case 'password':
         return <ChangePasswordPage />;
       default:
@@ -32,7 +37,11 @@ function StudentDashboard() {
 
   return (
     <DashboardLayout role="student" activeTab={activeTab} setActiveTab={setActiveTab}>
-      <div style={{ marginBottom: 24 }}>
+      <Box sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <strong>Anonymous Feedback Guarantee:</strong> Your identity is protected. Faculty members see aggregated ratings and anonymous comments only.
+        </Alert>
+        
         {loading ? (
           <span>Loading summary...</span>
         ) : error ? (
@@ -42,10 +51,11 @@ function StudentDashboard() {
             <strong>Feedback Progress:</strong> {status.submittedCount} / {status.totalAssignments} submitted. Pending: {status.pendingCount}
           </>
         ) : null}
-      </div>
+      </Box>
       {renderContent()}
     </DashboardLayout>
   );
 }
 
 export default StudentDashboard;
+```

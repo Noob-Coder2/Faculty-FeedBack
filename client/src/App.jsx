@@ -10,6 +10,8 @@ import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 
 import ErrorContext from './contexts/ErrorContext';
@@ -111,6 +113,14 @@ const App = () => {
         <Route
           path="/register"
           element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+        />
+        <Route
+          path="/forgot-password"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />}
+        />
+        <Route
+          path="/reset-password/:token"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPassword />}
         />
         <Route
           path="/faculty-dashboard"

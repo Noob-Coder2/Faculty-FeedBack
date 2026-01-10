@@ -20,6 +20,7 @@ const studentRoutes = require('./routes/student');
 const facultyRoutes = require('./routes/faculty');
 const profileRoutes = require('./routes/profile');
 const changePasswordRoutes = require('./routes/change-password');
+const resetPasswordRoutes = require('./routes/reset-password');
 
 // import custom middleware
 const auth = require('./middleware/auth');
@@ -70,6 +71,7 @@ app.use('/api/student', auth, checkRole(['student']), studentRoutes);
 app.use('/api/faculty', auth, checkRole(['faculty']), facultyRoutes);
 app.use('/api/admin/faculty-ratings', auth, checkRole(['admin']), facultyRatingsRoutes);
 app.use('/api/auth', profileRoutes);
+app.use('/api/auth', resetPasswordRoutes);
 app.use('/api/user', auth, changePasswordRoutes);
 
 // Add logout route
@@ -125,20 +127,20 @@ mongoose.connect(MONGO_URI, {
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000 // Timeout after 5 seconds
 })
-.then(() => {
-  logger.info('Successfully connected to MongoDB Atlas!');
-  app.listen(PORT, () => {
-    logger.info(`Server listening on port ${PORT}`);
+  .then(() => {
+    logger.info('Successfully connected to MongoDB Atlas!');
+    app.listen(PORT, () => {
+      logger.info(`Server listening on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    logger.error('MongoDB connection error', {
+      error: err.message,
+      stack: err.stack,
+      code: err.code
+    });
+    process.exit(1);
   });
-})
-.catch(err => {
-  logger.error('MongoDB connection error', {
-    error: err.message,
-    stack: err.stack,
-    code: err.code
-  });
-  process.exit(1);
-});
 
 // Monitor for MongoDB connection issues
 mongoose.connection.on('error', err => {

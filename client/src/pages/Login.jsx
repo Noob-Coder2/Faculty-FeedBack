@@ -1,8 +1,8 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Box, TextField, Button, Typography, Alert } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Box, TextField, Button, Typography, Alert, Link } from '@mui/material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../store/authSlice';
 import { useState } from 'react';
@@ -20,8 +20,10 @@ function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [serverError, setServerError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data) => {
+    setLoading(true);
     try {
       console.log('Login Payload:', data); // Debug payload
       setServerError(null);
@@ -32,6 +34,8 @@ function Login() {
     } catch (err) {
       setServerError(err.message || 'Failed to login');
       console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,13 +73,24 @@ function Login() {
             />
           )}
         />
-        <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-          Login
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2 }}
+          disabled={loading}
+        >
+          {loading ? 'Signing in...' : 'Login'}
         </Button>
+        <Box display="flex" justifyContent="space-between" width="100%" sx={{ mt: 2 }}>
+          <Link component={RouterLink} to="/forgot-password" variant="body2">
+            Forgot Password?
+          </Link>
+          <Link component={RouterLink} to="/register" variant="body2">
+            {"Don't have an account? Sign Up"}
+          </Link>
+        </Box>
       </form>
-      <Typography sx={{ mt: 2, textAlign: 'center' }}>
-        Don't have an account? <a href="/register">Register here</a>
-      </Typography>
     </Box>
   );
 }

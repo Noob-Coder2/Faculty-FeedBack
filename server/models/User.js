@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        minlength: [6, 'Password must be at least 6 characters long'] // Example: Enforce minimum length
+        minlength: [8, 'Password must be at least 8 characters long'] // Enforce minimum length of 8
     },
     role: {
         type: String,
@@ -38,7 +38,19 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
-    }
+    },
+    lastLogin: {
+        type: Date
+    },
+    failedLoginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lockUntil: {
+        type: Date
+    },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
 }, {
     // Automatically add createdAt and updatedAt timestamps
     timestamps: true
