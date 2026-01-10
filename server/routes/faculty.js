@@ -10,7 +10,114 @@ const Class = require("../models/Class");
 const RatingParameter = require("../models/RatingParameter");
 const validate = require("../middleware/validate");
 const auth = require("../middleware/auth");
-const User = require("../models/User"); // Import User model
+const User = require("../models/User");
+const FacultyProfile = require("../models/FacultyProfile");
+
+// GET /api/faculty/analytics - Get analytics data for the logged-in faculty
+router.get('/analytics', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Find user to get MongoDB ObjectId
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const facultyProfile = await FacultyProfile.findOne({ user: user._id });
+    if (!facultyProfile) {
+      return res.status(404).json({ message: 'Faculty profile not found' });
+    }
+
+    // 1. Trend Data: Average rating per feedback period
+    const trendData = await AggregatedRating.aggregate([
+      {
+        $lookup: {
+          from: 'teachingassignments',
+          localField: 'teachingAssignment',
+          foreignField: '_id',
+          as: 'teachingAssignment'
+        }
+      },
+      { $unwind: '$teachingAssignment' },
+      {
+        $match: {
+          'teachingAssignment.faculty': user._id
+        }
+      },
+      {
+        $lookup: {
+          from: 'feedbackperiods',
+          localField: 'teachingAssignment.feedbackPeriod',
+          foreignField: '_id',
+          as: 'feedbackPeriod'
+        }
+      },
+      { $unwind: '$feedbackPeriod' },
+      {
+        $group: {
+          _id: '$feedbackPeriod.name',
+          averageRating: { $avg: '$averageRating' },
+          endDate: { $first: '$feedbackPeriod.endDate' }
+        }
+      },
+      { $sort: { endDate: 1 } },
+      {
+        $project: {
+          period: '$_id',
+          averageRating: { $round: ['$averageRating', 2] },
+          _id: 0
+        }
+      }
+    ]);
+
+    // 2. Department Average
+    const departmentAverageResult = await AggregatedRating.aggregate([
+      {
+        $lookup: {
+          from: 'teachingassignments',
+          localField: 'teachingAssignment',
+          foreignField: '_id',
+          as: 'teachingAssignment'
+        }
+      },
+      { $unwind: '$teachingAssignment' },
+      {
+        $lookup: {
+          from: 'facultyprofiles',
+          localField: 'teachingAssignment.faculty',
+          foreignField: 'user',
+          as: 'facultyProfile'
+        }
+      },
+      { $unwind: '$facultyProfile' },
+      {
+        $match: {
+          'facultyProfile.department': facultyProfile.department
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: '$averageRating' }
+        }
+      }
+    ]);
+
+    const departmentAverage = departmentAverageResult.length > 0
+      ? parseFloat(departmentAverageResult[0].averageRating.toFixed(2))
+      : 0;
+
+    res.status(200).json({
+      trendData,
+      departmentAverage
+    });
+
+  } catch (error) {
+    console.error('Analytics Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // GET /api/faculty/ratings - Retrieve their aggregated, anonymous feedback ratings in real-time
 router.get(
@@ -40,11 +147,11 @@ router.get(
       const targetFeedbackPeriod = feedbackPeriod
         ? await FeedbackPeriod.findById(feedbackPeriod)
         : (await FeedbackPeriod.findOne({
-            startDate: { $lte: currentDate },
-            endDate: { $gte: currentDate },
-            isActive: true,
-          })) ||
-          (await FeedbackPeriod.findOne({}, {}, { sort: { endDate: -1 } })); // Fallback to most recent if no active period
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate },
+          isActive: true,
+        })) ||
+        (await FeedbackPeriod.findOne({}, {}, { sort: { endDate: -1 } })); // Fallback to most recent if no active period
 
       if (!targetFeedbackPeriod) {
         return res.status(404).json({ message: "No feedback period found" });
@@ -180,7 +287,52 @@ router.get(
       console.error("Faculty Search Error:", error);
       res.status(500).json({ message: "Server error during faculty search" });
     }
+  });
+
+// GET /api/faculty/comments - Get comments for the logged-in faculty
+router.get('/comments', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const Feedback = require('../models/Feedback');
+
+    // Find user to get MongoDB ObjectId
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Find all teaching assignments for this faculty
+    const assignments = await TeachingAssignment.find({ faculty: user._id }).select('_id');
+    const assignmentIds = assignments.map(a => a._id);
+
+    // Fetch comments for these assignments
+    const comments = await Feedback.find({
+      teachingAssignment: { $in: assignmentIds },
+      comment: { $exists: true, $ne: '' }
+    })
+      .populate({
+        path: 'teachingAssignment',
+        populate: { path: 'subject class feedbackPeriod', select: 'subjectName name name' }
+      })
+      .select('comment submittedAt teachingAssignment')
+      .sort({ submittedAt: -1 })
+      .limit(50);
+
+    const formattedComments = comments.map(c => ({
+      id: c._id,
+      text: c.comment,
+      date: c.submittedAt,
+      subject: c.teachingAssignment?.subject?.subjectName || 'Unknown',
+      class: c.teachingAssignment?.class?.name || 'Unknown',
+      period: c.teachingAssignment?.feedbackPeriod?.name || 'Unknown'
+    }));
+
+    res.status(200).json({ comments: formattedComments });
+  } catch (error) {
+    console.error('Get Comments Error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-);
+});
 
 module.exports = router;
+

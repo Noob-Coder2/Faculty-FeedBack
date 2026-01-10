@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faUser, faComment, faLock, faSignOutAlt, faStar, faChartLine, faBars, faHistory
+  faUser, faComment, faLock, faSignOutAlt, faStar, faChartLine, faBars, faHistory, faComments
 } from '@fortawesome/free-solid-svg-icons';
 import { useDispatch } from 'react-redux';
 import debounce from 'lodash/debounce';
@@ -77,6 +77,7 @@ function DashboardLayout({ role, children, activeTab, setActiveTab }) {
     role === 'student' && { label: 'History', icon: faHistory, value: 'history' },
     role === 'faculty' && { label: 'Analytics', icon: faChartLine, value: 'analytics' },
     role === 'faculty' && { label: 'My Ratings', icon: faStar, value: 'ratings' },
+    role === 'faculty' && { label: 'Comments', icon: faComments, value: 'comments' },
     { label: 'Change Password', icon: faLock, value: 'password' },
   ].filter(Boolean);
 

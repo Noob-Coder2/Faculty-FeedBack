@@ -11,7 +11,8 @@ import {
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
   People as PeopleIcon, School as SchoolIcon, Book as BookIcon,
-  Assignment as AssignmentIcon, Feedback as FeedbackIcon, Event as EventIcon
+  Assignment as AssignmentIcon, Feedback as FeedbackIcon, Event as EventIcon,
+  Lock as LockIcon, Person as PersonIcon
 } from '@mui/icons-material';
 import {
   getUsers, getClasses, getTeachingAssignments, getSubjects, getFeedbackPeriods,
@@ -32,6 +33,8 @@ import FeedbackPeriodFormDialog from '../components/Admin/FeedbackPeriodFormDial
 import UserFormDialog from '../components/Admin/UserFormDialog';
 import ClassFormDialog from '../components/Admin/ClassFormDialog';
 import AssignmentFormDialog from '../components/Admin/AssignmentFormDialog';
+import ProfilePage from '../components/ProfilePage';
+import ChangePasswordPage from '../components/Shared/ChangePasswordPage';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -356,18 +359,25 @@ function AdminDashboard() {
       <Paper sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabIndex} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+            <Tab label="Profile" icon={<PersonIcon />} iconPosition="start" />
             <Tab label="Overview" icon={<AssignmentIcon />} iconPosition="start" />
             <Tab label="Users" icon={<PeopleIcon />} iconPosition="start" />
             <Tab label="Subjects" icon={<BookIcon />} iconPosition="start" />
             <Tab label="Feedback Periods" icon={<EventIcon />} iconPosition="start" />
             <Tab label="Classes" icon={<SchoolIcon />} iconPosition="start" />
             <Tab label="Assignments" icon={<FeedbackIcon />} iconPosition="start" />
-            <Tab label="Reports" />
+            <Tab label="Reports" icon={<AssignmentIcon />} iconPosition="start" />
+            <Tab label="Change Password" icon={<LockIcon />} iconPosition="start" />
           </Tabs>
         </Box>
 
-        {/* Overview Tab */}
+        {/* Profile Tab */}
         <TabPanel value={tabIndex} index={0}>
+          <ProfilePage />
+        </TabPanel>
+
+        {/* Overview Tab */}
+        <TabPanel value={tabIndex} index={1}>
           <Typography variant="h6" gutterBottom>Dashboard Overview</Typography>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -398,7 +408,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Users Tab */}
-        <TabPanel value={tabIndex} index={1}>
+        <TabPanel value={tabIndex} index={2}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">Manage Users</Typography>
             <Stack direction="row" spacing={2}>
@@ -462,7 +472,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Subjects Tab */}
-        <TabPanel value={tabIndex} index={2}>
+        <TabPanel value={tabIndex} index={3}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">Manage Subjects</Typography>
             <Stack direction="row" spacing={2}>
@@ -509,7 +519,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Feedback Periods Tab */}
-        <TabPanel value={tabIndex} index={3}>
+        <TabPanel value={tabIndex} index={4}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">Manage Feedback Periods</Typography>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingPeriod(null); setPeriodFormOpen(true); }}>
@@ -560,7 +570,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Classes Tab */}
-        <TabPanel value={tabIndex} index={4}>
+        <TabPanel value={tabIndex} index={5}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">Manage Classes</Typography>
             <Stack direction="row" spacing={2}>
@@ -608,7 +618,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Assignments Tab */}
-        <TabPanel value={tabIndex} index={5}>
+        <TabPanel value={tabIndex} index={6}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">Teaching Assignments</Typography>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingAssignment(null); setAssignmentFormOpen(true); }}>
@@ -648,7 +658,7 @@ function AdminDashboard() {
         </TabPanel>
 
         {/* Reports Tab */}
-        <TabPanel value={tabIndex} index={6}>
+        <TabPanel value={tabIndex} index={7}>
           <Typography variant="h6" gutterBottom>Download Reports</Typography>
           <Stack direction="row" spacing={2}>
             <Button variant="contained" color="primary" onClick={() => downloadReport('pdf')}>
@@ -658,6 +668,13 @@ function AdminDashboard() {
               Export Ratings Excel
             </Button>
           </Stack>
+        </TabPanel>
+
+
+
+        {/* Change Password Tab */}
+        <TabPanel value={tabIndex} index={8}>
+          <ChangePasswordPage />
         </TabPanel>
       </Paper>
 
@@ -708,7 +725,7 @@ function AdminDashboard() {
         classes={classes}
         feedbackPeriods={feedbackPeriods}
       />
-    </Container>
+    </Container >
   );
 }
 

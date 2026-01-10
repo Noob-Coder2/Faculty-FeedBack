@@ -20,6 +20,42 @@ mongoose.connect(process.env.MONGODB_URI)
     process.exit(1);
   });
 
+// Helper to generate random rating between min and max
+const randomRating = (min = 3, max = 5) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// Sample comments pool
+const positiveComments = [
+  "Excellent teaching style! Very clear explanations.",
+  "Great professor, always helpful and engaging.",
+  "Best teacher I've had. Highly recommended!",
+  "Very knowledgeable and passionate about the subject.",
+  "Amazing lectures, makes complex topics easy to understand.",
+  "Wonderful mentor, always available for doubts.",
+  "Love the interactive teaching approach!",
+];
+
+const neutralComments = [
+  "Good overall, could improve on some aspects.",
+  "Decent teaching, covers the syllabus well.",
+  "Average experience, nothing exceptional.",
+  "Satisfactory teaching quality.",
+  "Meets expectations for the course.",
+];
+
+const constructiveComments = [
+  "Could use more practical examples.",
+  "Pace is a bit fast sometimes.",
+  "More real-world applications would help.",
+  "Would appreciate more interactive sessions.",
+  "Assignments could be more challenging.",
+];
+
+const getRandomComment = (rating) => {
+  if (rating >= 4) return positiveComments[Math.floor(Math.random() * positiveComments.length)];
+  if (rating >= 3) return neutralComments[Math.floor(Math.random() * neutralComments.length)];
+  return constructiveComments[Math.floor(Math.random() * constructiveComments.length)];
+};
+
 const seedData = async () => {
   try {
     // Clear existing data (except admins)
@@ -37,98 +73,103 @@ const seedData = async () => {
     ]);
     console.log('Non-admin data cleared');
 
-    // Classes
+    // ========== CLASSES ==========
     const classes = [
-      { name: 'CS101', branch: 'CSE', semester: '1', year: 2025, section: 'A', academicYear: '2024-2025' },
-      { name: 'CS301', branch: 'CSE', semester: '3', year: 2025, section: 'A', academicYear: '2024-2025' },
-      { name: 'EC201', branch: 'ECE', semester: '2', year: 2025, section: 'B', academicYear: '2024-2025' },
-      { name: 'ME401', branch: 'ME', semester: '4', year: 2025, section: 'A', academicYear: '2024-2025' },
-      { name: 'CS501', branch: 'CSE', semester: '5', year: 2025, section: 'B', academicYear: '2024-2025' },
-      { name: 'EE601', branch: 'EE', semester: '6', year: 2025, section: 'A', academicYear: '2024-2025' },
-      { name: 'CS601', branch: 'CSE', semester: '6', year: 2025, section: 'A', academicYear: '2024-2025' },
-      { name: 'EC401', branch: 'ECE', semester: '4', year: 2025, section: 'B', academicYear: '2024-2025' },
+      { name: 'CSE-1A-2024', branch: 'CSE', semester: 1, year: 2024, section: 'A', academicYear: '2024-2025' },
+      { name: 'CSE-1B-2024', branch: 'CSE', semester: 1, year: 2024, section: 'B', academicYear: '2024-2025' },
+      { name: 'CSE-3A-2024', branch: 'CSE', semester: 3, year: 2024, section: 'A', academicYear: '2024-2025' },
+      { name: 'CSE-3B-2024', branch: 'CSE', semester: 3, year: 2024, section: 'B', academicYear: '2024-2025' },
+      { name: 'CSE-5A-2024', branch: 'CSE', semester: 5, year: 2024, section: 'A', academicYear: '2024-2025' },
+      { name: 'ECE-2A-2024', branch: 'ECE', semester: 2, year: 2024, section: 'A', academicYear: '2024-2025' },
+      { name: 'ECE-4A-2024', branch: 'ECE', semester: 4, year: 2024, section: 'A', academicYear: '2024-2025' },
+      { name: 'ME-2A-2024', branch: 'ME', semester: 2, year: 2024, section: 'A', academicYear: '2024-2025' },
     ];
     const savedClasses = await Class.insertMany(classes);
-    console.log('Classes seeded');
+    console.log(`✓ ${savedClasses.length} Classes seeded`);
 
-    // Subjects
+    // ========== SUBJECTS ==========
     const subjects = [
       { subjectCode: 'CS101', subjectName: 'Introduction to Programming', branch: 'CSE', semester: 1 },
-      { subjectCode: 'CS302', subjectName: 'Database Systems', branch: 'CSE', semester: 3 },
-      { subjectCode: 'CS201', subjectName: 'Data Structures', branch: 'CSE', semester: 2 },
-      { subjectCode: 'CS401', subjectName: 'Operating Systems', branch: 'CSE', semester: 4 },
-      { subjectCode: 'CS502', subjectName: 'Machine Learning', branch: 'CSE', semester: 5 },
-      { subjectCode: 'EC202', subjectName: 'Circuit Theory', branch: 'ECE', semester: 2 },
-      { subjectCode: 'EC301', subjectName: 'Digital Electronics', branch: 'ECE', semester: 3 },
-      { subjectCode: 'ME401', subjectName: 'Thermodynamics', branch: 'ME', semester: 4 },
-      { subjectCode: 'ME501', subjectName: 'Mechanical Design', branch: 'ME', semester: 5 },
-      { subjectCode: 'EE601', subjectName: 'Power Systems', branch: 'EE', semester: 6 },
-      { subjectCode: 'CS601', subjectName: 'Cloud Computing', branch: 'CSE', semester: 6 },
-      { subjectCode: 'EE401', subjectName: 'Control Systems', branch: 'EE', semester: 4 },
-      { subjectCode: 'CS503', subjectName: 'Artificial Intelligence', branch: 'CSE', semester: 5 },
-      { subjectCode: 'CS303', subjectName: 'Computer Networks', branch: 'CSE', semester: 3 },
-      { subjectCode: 'EC402', subjectName: 'Robotics', branch: 'ECE', semester: 4 },
-      { subjectCode: 'ME601', subjectName: 'Fluid Mechanics', branch: 'ME', semester: 6 },
+      { subjectCode: 'CS102', subjectName: 'Digital Logic', branch: 'CSE', semester: 1 },
+      { subjectCode: 'CS201', subjectName: 'Data Structures', branch: 'CSE', semester: 3 },
+      { subjectCode: 'CS202', subjectName: 'Object Oriented Programming', branch: 'CSE', semester: 3 },
+      { subjectCode: 'CS301', subjectName: 'Database Systems', branch: 'CSE', semester: 3 },
+      { subjectCode: 'CS302', subjectName: 'Computer Networks', branch: 'CSE', semester: 5 },
+      { subjectCode: 'CS303', subjectName: 'Operating Systems', branch: 'CSE', semester: 5 },
+      { subjectCode: 'CS304', subjectName: 'Machine Learning', branch: 'CSE', semester: 5 },
+      { subjectCode: 'EC201', subjectName: 'Circuit Theory', branch: 'ECE', semester: 2 },
+      { subjectCode: 'EC301', subjectName: 'Digital Electronics', branch: 'ECE', semester: 4 },
+      { subjectCode: 'ME201', subjectName: 'Engineering Mechanics', branch: 'ME', semester: 2 },
+      { subjectCode: 'ME202', subjectName: 'Thermodynamics', branch: 'ME', semester: 2 },
     ];
     const savedSubjects = await Subject.insertMany(subjects);
-    console.log('Subjects seeded');
+    console.log(`✓ ${savedSubjects.length} Subjects seeded`);
 
-    // Feedback Periods (Past and Current)
+    // ========== FEEDBACK PERIODS (3 periods) ==========
     const feedbackPeriods = [
       {
-        name: 'Fall 2024 Feedback',
+        name: 'Mid-Semester Fall 2024',
         semester: 1,
         year: 2024,
-        startDate: new Date('2024-11-01'),
-        endDate: new Date('2024-11-15'),
+        startDate: new Date('2024-09-15'),
+        endDate: new Date('2024-09-30'),
         isActive: false,
         status: 'closed',
       },
       {
-        name: 'Spring 2025 Feedback',
+        name: 'End-Semester Fall 2024',
+        semester: 1,
+        year: 2024,
+        startDate: new Date('2024-11-15'),
+        endDate: new Date('2024-11-30'),
+        isActive: false,
+        status: 'closed',
+      },
+      {
+        name: 'Mid-Semester Spring 2025',
         semester: 2,
         year: 2025,
-        startDate: new Date('2025-04-01'),
-        endDate: new Date('2025-04-15'),
+        startDate: new Date('2025-01-01'),
+        endDate: new Date('2025-01-31'),
         isActive: true,
         status: 'active',
       },
     ];
-    const savedFeedbackPeriods = await FeedbackPeriod.insertMany(feedbackPeriods);
-    console.log('Feedback Periods seeded');
+    const savedPeriods = await FeedbackPeriod.insertMany(feedbackPeriods);
+    console.log(`✓ ${savedPeriods.length} Feedback Periods seeded`);
 
-    // Rating Parameters
+    // ========== RATING PARAMETERS ==========
     const ratingParameters = [
-      { parameterId: 'PUNCTUALITY', questionText: 'Rate the faculty\'s punctuality', order: 1 },
-      { parameterId: 'KNOWLEDGE', questionText: 'Rate the faculty\'s subject knowledge', order: 2 },
-      { parameterId: 'ENGAGEMENT', questionText: 'Rate the faculty\'s engagement with students', order: 3 },
-      { parameterId: 'CLARITY', questionText: 'Rate the faculty\'s clarity in teaching', order: 4 },
-      { parameterId: 'SUPPORT', questionText: 'Rate the faculty\'s supportiveness', order: 5 },
+      { parameterId: 'PUNCTUALITY', questionText: 'Rate the faculty\'s punctuality', order: 1, isActive: true },
+      { parameterId: 'KNOWLEDGE', questionText: 'Rate the faculty\'s subject knowledge', order: 2, isActive: true },
+      { parameterId: 'ENGAGEMENT', questionText: 'Rate the faculty\'s engagement with students', order: 3, isActive: true },
+      { parameterId: 'CLARITY', questionText: 'Rate the faculty\'s clarity in teaching', order: 4, isActive: true },
+      { parameterId: 'SUPPORT', questionText: 'Rate the faculty\'s supportiveness', order: 5, isActive: true },
     ];
-    const savedRatingParameters = await RatingParameter.insertMany(ratingParameters);
-    console.log('Rating Parameters seeded');
+    const savedParams = await RatingParameter.insertMany(ratingParameters);
+    console.log(`✓ ${savedParams.length} Rating Parameters seeded`);
 
-    // Faculty
+    // ========== 5 FACULTY MEMBERS ==========
     const facultyData = [
       {
-        user: { userId: 'FAC001', name: 'Dr. Jane Smith', email: 'jane.smith@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Computer Science',
-          designation: 'Professor',
-          joiningYear: 2015,
-          qualifications: ['PhD'],
-          subjects: [savedSubjects[0]._id, savedSubjects[1]._id, savedSubjects[13]._id],
-        },
+        user: { userId: 'FAC001', name: 'Dr. Jane Smith', email: 'jane.smith@university.edu', password: 'faculty123', role: 'faculty' },
+        profile: { department: 'Computer Science', designation: 'Professor', joiningYear: 2015, qualifications: ['PhD', 'MTech'], subjects: [savedSubjects[0]._id, savedSubjects[2]._id, savedSubjects[4]._id] }
       },
       {
-        user: { userId: 'FAC002', name: 'Prof. Mark Lee', email: 'mark.lee@example.com', password: 'faculty123', role: 'faculty' },
-        profile: {
-          department: 'Electronics',
-          designation: 'Associate Professor',
-          joiningYear: 2018,
-          qualifications: ['MTech', 'PhD'],
-          subjects: [savedSubjects[5]._id, savedSubjects[6]._id, savedSubjects[14]._id],
-        },
+        user: { userId: 'FAC002', name: 'Prof. Mark Williams', email: 'mark.williams@university.edu', password: 'faculty123', role: 'faculty' },
+        profile: { department: 'Computer Science', designation: 'Associate Professor', joiningYear: 2018, qualifications: ['PhD'], subjects: [savedSubjects[1]._id, savedSubjects[3]._id, savedSubjects[5]._id] }
+      },
+      {
+        user: { userId: 'FAC003', name: 'Dr. Sarah Johnson', email: 'sarah.johnson@university.edu', password: 'faculty123', role: 'faculty' },
+        profile: { department: 'Computer Science', designation: 'Assistant Professor', joiningYear: 2020, qualifications: ['PhD'], subjects: [savedSubjects[6]._id, savedSubjects[7]._id] }
+      },
+      {
+        user: { userId: 'FAC004', name: 'Prof. David Chen', email: 'david.chen@university.edu', password: 'faculty123', role: 'faculty' },
+        profile: { department: 'Electronics', designation: 'Professor', joiningYear: 2012, qualifications: ['PhD', 'MTech'], subjects: [savedSubjects[8]._id, savedSubjects[9]._id] }
+      },
+      {
+        user: { userId: 'FAC005', name: 'Dr. Emily Brown', email: 'emily.brown@university.edu', password: 'faculty123', role: 'faculty' },
+        profile: { department: 'Mechanical', designation: 'Associate Professor', joiningYear: 2017, qualifications: ['PhD'], subjects: [savedSubjects[10]._id, savedSubjects[11]._id] }
       },
     ];
     const savedFaculty = [];
@@ -138,95 +179,175 @@ const seedData = async () => {
       await FacultyProfile.create({ user: saved._id, ...profile });
       savedFaculty.push(saved);
     }
-    console.log('Faculty seeded');
+    console.log(`✓ ${savedFaculty.length} Faculty members seeded`);
 
-    // Students
-    const studentData = [
-      {
-        user: { userId: 'STU001', name: 'Alice Johnson', email: 'alice@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
-      },
-      {
-        user: { userId: 'STU002', name: 'Bob Brown', email: 'bob@example.com', password: 'student123', role: 'student' },
-        profile: { branch: 'CSE', semester: 3, section: 'A', classId: savedClasses[1]._id, admissionYear: 2023, subjects: [savedSubjects[1]._id, savedSubjects[13]._id], pendingMapping: false },
-      },
+    // ========== 20 STUDENTS ==========
+    const studentNames = [
+      'Alice Johnson', 'Bob Smith', 'Charlie Davis', 'Diana Wilson', 'Ethan Moore',
+      'Fiona Taylor', 'George Anderson', 'Hannah Thomas', 'Ian Jackson', 'Julia White',
+      'Kevin Harris', 'Laura Martin', 'Michael Garcia', 'Nancy Martinez', 'Oliver Robinson',
+      'Patricia Clark', 'Quincy Lewis', 'Rachel Lee', 'Samuel Walker', 'Tina Hall'
     ];
     const savedStudents = [];
-    for (const { user, profile } of studentData) {
-      const student = new User(user);
-      const saved = await student.save();
-      await StudentProfile.create({ user: saved._id, ...profile });
+    for (let i = 0; i < 20; i++) {
+      const classIndex = i % savedClasses.length;
+      const classObj = savedClasses[classIndex];
+      const user = new User({
+        userId: `STU${String(i + 1).padStart(3, '0')}`,
+        name: studentNames[i],
+        email: `${studentNames[i].toLowerCase().replace(' ', '.')}@student.edu`,
+        password: 'student123',
+        role: 'student'
+      });
+      const saved = await user.save();
+
+      // Assign subjects based on class branch
+      let studentSubjects = [];
+      if (classObj.branch === 'CSE') {
+        studentSubjects = savedSubjects.filter(s => s.branch === 'CSE').slice(0, 3).map(s => s._id);
+      } else if (classObj.branch === 'ECE') {
+        studentSubjects = savedSubjects.filter(s => s.branch === 'ECE').map(s => s._id);
+      } else {
+        studentSubjects = savedSubjects.filter(s => s.branch === 'ME').map(s => s._id);
+      }
+
+      await StudentProfile.create({
+        user: saved._id,
+        branch: classObj.branch,
+        semester: classObj.semester,
+        section: classObj.section,
+        classId: classObj._id,
+        admissionYear: 2023,
+        subjects: studentSubjects,
+        status: 'active'
+      });
       savedStudents.push(saved);
     }
-    console.log('Students seeded');
+    console.log(`✓ ${savedStudents.length} Students seeded`);
 
-    // Teaching Assignments
-    const teachingAssignments = [
-      // Past Period (Fall 2024)
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[0]._id },
+    // ========== TEACHING ASSIGNMENTS (Faculty -> Subject -> Class -> Period) ==========
+    const teachingAssignments = [];
 
-      // Current Period (Spring 2025)
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id },
-      { faculty: savedFaculty[0]._id, subject: savedSubjects[13]._id, class: savedClasses[1]._id, feedbackPeriod: savedFeedbackPeriods[1]._id },
-    ];
-    const savedTeachingAssignments = await TeachingAssignment.insertMany(teachingAssignments);
-    console.log('Teaching Assignments seeded');
+    // Faculty 1 (Dr. Jane Smith) - CSE subjects across all 3 periods
+    teachingAssignments.push(
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[0]._id, class: savedClasses[0]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[0]._id, class: savedClasses[0]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[0]._id, class: savedClasses[0]._id, feedbackPeriod: savedPeriods[2]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[2]._id, class: savedClasses[2]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[2]._id, class: savedClasses[2]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[0]._id, subject: savedSubjects[2]._id, class: savedClasses[2]._id, feedbackPeriod: savedPeriods[2]._id },
+    );
 
-    // --- SEEDING INDIVIDUAL FEEDBACK & AGGREGATED RATINGS ---
+    // Faculty 2 (Prof. Mark Williams)
+    teachingAssignments.push(
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[1]._id, class: savedClasses[1]._id, feedbackPeriod: savedPeriods[2]._id },
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[5]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[5]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[1]._id, subject: savedSubjects[5]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[2]._id },
+    );
 
-    // 1. Past Feedback (Fall 2024) - For Trend Analysis
-    // Student 1 -> Assignment 0 (Jane Smith, CS302, Fall 2024)
-    await Feedback.create({
-      teachingAssignment: savedTeachingAssignments[0]._id,
-      student: savedStudents[0]._id,
-      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 3 })), // Average 3.0
-      comment: "Good but could be better.",
-      submittedAt: new Date('2024-11-10')
-    });
+    // Faculty 3 (Dr. Sarah Johnson)
+    teachingAssignments.push(
+      { faculty: savedFaculty[2]._id, subject: savedSubjects[6]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[2]._id, subject: savedSubjects[6]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[2]._id, subject: savedSubjects[6]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[2]._id },
+      { faculty: savedFaculty[2]._id, subject: savedSubjects[7]._id, class: savedClasses[4]._id, feedbackPeriod: savedPeriods[2]._id },
+    );
 
-    // Create Aggregated Rating for Assignment 0
-    for (const rp of savedRatingParameters) {
+    // Faculty 4 (Prof. David Chen) - ECE
+    teachingAssignments.push(
+      { faculty: savedFaculty[3]._id, subject: savedSubjects[8]._id, class: savedClasses[5]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[3]._id, subject: savedSubjects[8]._id, class: savedClasses[5]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[3]._id, subject: savedSubjects[8]._id, class: savedClasses[5]._id, feedbackPeriod: savedPeriods[2]._id },
+      { faculty: savedFaculty[3]._id, subject: savedSubjects[9]._id, class: savedClasses[6]._id, feedbackPeriod: savedPeriods[2]._id },
+    );
+
+    // Faculty 5 (Dr. Emily Brown) - ME
+    teachingAssignments.push(
+      { faculty: savedFaculty[4]._id, subject: savedSubjects[10]._id, class: savedClasses[7]._id, feedbackPeriod: savedPeriods[0]._id },
+      { faculty: savedFaculty[4]._id, subject: savedSubjects[10]._id, class: savedClasses[7]._id, feedbackPeriod: savedPeriods[1]._id },
+      { faculty: savedFaculty[4]._id, subject: savedSubjects[10]._id, class: savedClasses[7]._id, feedbackPeriod: savedPeriods[2]._id },
+      { faculty: savedFaculty[4]._id, subject: savedSubjects[11]._id, class: savedClasses[7]._id, feedbackPeriod: savedPeriods[2]._id },
+    );
+
+    const savedAssignments = await TeachingAssignment.insertMany(teachingAssignments);
+    console.log(`✓ ${savedAssignments.length} Teaching Assignments seeded`);
+
+    // ========== FEEDBACK SUBMISSION ==========
+    // Map to track aggregated ratings per assignment+parameter
+    const aggregatedMap = new Map();
+    let feedbackCount = 0;
+
+    // Generate feedback for each period
+    for (const assignment of savedAssignments) {
+      // Find students in this class
+      const classStudents = savedStudents.filter((s, i) => {
+        const classIndex = i % savedClasses.length;
+        return savedClasses[classIndex]._id.toString() === assignment.class.toString();
+      });
+
+      // Each student submits feedback (3-5 students per assignment)
+      const numResponses = Math.min(classStudents.length, Math.floor(Math.random() * 3) + 3);
+
+      for (let i = 0; i < numResponses && i < classStudents.length; i++) {
+        const student = classStudents[i];
+        const baseRating = randomRating(3, 5);
+
+        // Create individual ratings with slight variation
+        const ratings = savedParams.map(rp => ({
+          ratingParameter: rp._id,
+          value: Math.min(5, Math.max(1, baseRating + randomRating(-1, 1)))
+        }));
+
+        const feedback = await Feedback.create({
+          teachingAssignment: assignment._id,
+          student: student._id,
+          ratings,
+          comment: Math.random() > 0.3 ? getRandomComment(baseRating) : '', // 70% have comments
+          submittedAt: new Date(assignment.feedbackPeriod.toString() === savedPeriods[0]._id.toString() ? '2024-09-20' :
+            assignment.feedbackPeriod.toString() === savedPeriods[1]._id.toString() ? '2024-11-20' : '2025-01-15')
+        });
+        feedbackCount++;
+
+        // Update aggregated data
+        for (const r of ratings) {
+          const key = `${assignment._id}-${r.ratingParameter}`;
+          if (!aggregatedMap.has(key)) {
+            aggregatedMap.set(key, { sum: 0, count: 0, assignment: assignment._id, param: r.ratingParameter });
+          }
+          const agg = aggregatedMap.get(key);
+          agg.sum += r.value;
+          agg.count += 1;
+        }
+      }
+    }
+    console.log(`✓ ${feedbackCount} Feedback submissions created`);
+
+    // Create aggregated ratings
+    for (const [key, data] of aggregatedMap) {
       await AggregatedRating.create({
-        teachingAssignment: savedTeachingAssignments[0]._id,
-        ratingParameter: rp._id,
-        totalResponses: 1,
-        ratingSum: 3,
-        averageRating: 3.0
+        teachingAssignment: data.assignment,
+        ratingParameter: data.param,
+        totalResponses: data.count,
+        ratingSum: data.sum,
+        averageRating: parseFloat((data.sum / data.count).toFixed(2))
       });
     }
+    console.log(`✓ ${aggregatedMap.size} Aggregated Ratings created`);
 
-    // 2. Current Feedback (Spring 2025) - For History & Current Stats
-    // Student 1 -> Assignment 1 (Jane Smith, CS302, Spring 2025)
-    await Feedback.create({
-      teachingAssignment: savedTeachingAssignments[1]._id,
-      student: savedStudents[0]._id,
-      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 5 })), // Average 5.0
-      comment: "Excellent teaching style!",
-      submittedAt: new Date('2025-04-05')
-    });
+    console.log('\n========================================');
+    console.log('Database seeded successfully!');
+    console.log('========================================');
+    console.log(`Summary:`);
+    console.log(`  - 5 Faculty members (FAC001-FAC005, password: faculty123)`);
+    console.log(`  - 20 Students (STU001-STU020, password: student123)`);
+    console.log(`  - 3 Feedback Periods (2 closed, 1 active)`);
+    console.log(`  - ${savedAssignments.length} Teaching Assignments`);
+    console.log(`  - ${feedbackCount} Feedback Submissions`);
+    console.log('========================================\n');
 
-    // Student 2 -> Assignment 1 (Jane Smith, CS302, Spring 2025)
-    await Feedback.create({
-      teachingAssignment: savedTeachingAssignments[1]._id,
-      student: savedStudents[1]._id,
-      ratings: savedRatingParameters.map(rp => ({ ratingParameter: rp._id, value: 4 })), // Average 4.0
-      comment: "Very knowledgeable.",
-      submittedAt: new Date('2025-04-06')
-    });
-
-    // Create Aggregated Rating for Assignment 1 (Total 2 responses, Avg 4.5)
-    for (const rp of savedRatingParameters) {
-      await AggregatedRating.create({
-        teachingAssignment: savedTeachingAssignments[1]._id,
-        ratingParameter: rp._id,
-        totalResponses: 2,
-        ratingSum: 9,
-        averageRating: 4.5
-      });
-    }
-
-    console.log('Feedback and Aggregated Ratings seeded');
-    console.log('Database seeded successfully');
   } catch (error) {
     console.error('Seeding Error:', error);
   } finally {
