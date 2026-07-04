@@ -26,7 +26,7 @@ const resetPasswordRoutes = require('./routes/reset-password');
 const auth = require('./middleware/auth');
 const checkRole = require('./middleware/role');
 const validate = require('./middleware/validate');
-const loginLimiter = require('./middleware/ratelimiter');
+const loginLimiter = require('./middleware/rateLimiter');
 
 // import models
 require('./models/Class');
