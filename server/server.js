@@ -44,9 +44,11 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const logger = require('./utils/logger');
 
+const allowedOrigin = process.env.FRONTEND_URL;
+
 // Enhanced CORS configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://your-production-domain.com' : 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production' ? allowedOrigin : 'http://localhost:5173',
   credentials: true, // Allow credentials (cookies)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
