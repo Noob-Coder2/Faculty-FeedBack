@@ -12,7 +12,7 @@ export const injectStore = (_store, _logoutAction) => {
 export const createApiInstance = (onUnauthorized) => {
     // Axios instance with retry logic
     const api = axios.create({
-        baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+        baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
         headers: {
             'Content-Type': 'application/json',
         },
