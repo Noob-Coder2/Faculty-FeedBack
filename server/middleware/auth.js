@@ -25,7 +25,7 @@ const auth = (req, res, next) => {
         res.clearCookie('auth_token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'none',
             path: '/'
         });
         res.status(401).json({ message: 'Session expired. Please login again.' });

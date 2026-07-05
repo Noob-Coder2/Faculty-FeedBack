@@ -68,7 +68,7 @@ router.post(
       res.cookie('auth_token', token, {
         httpOnly: true, // Prevents JavaScript access
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: 'strict', // CSRF protection
+        sameSite: 'none', // CSRF protection
         maxAge: 3600000, // 1 hour in milliseconds
         path: '/' // Cookie is valid for all paths
       });
